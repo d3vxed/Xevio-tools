@@ -147,7 +147,7 @@ function ToolSearch() {
               <div className="max-h-[50vh] overflow-y-auto p-2">
                 {results.length === 0 ? (
                   <div className="py-8 text-center text-sm text-[#91887D]">
-                    No tools match “{q}”
+                    No tools match
                   </div>
                 ) : (
                   results.map((t) => (
