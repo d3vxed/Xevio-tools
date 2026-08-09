@@ -1,0 +1,218 @@
+import type { ReactNode } from "react";
+import {
+  Merge,
+  Scissors,
+  Archive,
+  Image as ImageIcon,
+  FileImage,
+  Eraser,
+  Minimize2,
+  Maximize2,
+  ArrowLeftRight,
+  Crop,
+  MonitorSmartphone,
+  FileText,
+  Braces,
+  Table2,
+  QrCode,
+  KeyRound,
+} from "lucide-react";
+
+export type ToolCategory = "PDF" | "Images" | "Text & Data";
+
+export type Tool = {
+  slug: string;
+  name: string;
+  shortName: string;
+  category: ToolCategory;
+  description: string;
+  icon: ReactNode;
+  path: string;
+  local: boolean;
+  keywords: string[];
+};
+
+export const TOOLS: Tool[] = [
+  {
+    slug: "merge-pdf",
+    name: "Merge PDF",
+    shortName: "Merge",
+    category: "PDF",
+    description: "Combine multiple PDFs into one file, fully in your browser.",
+    icon: <Merge className="w-5 h-5" />,
+    path: "/tools/merge-pdf",
+    local: true,
+    keywords: ["combine", "join", "pdf", "merge"],
+  },
+  {
+    slug: "split-pdf",
+    name: "Split PDF",
+    shortName: "Split",
+    category: "PDF",
+    description: "Extract pages or ranges from a PDF file.",
+    icon: <Scissors className="w-5 h-5" />,
+    path: "/tools/split-pdf",
+    local: true,
+    keywords: ["extract", "pdf", "pages", "split"],
+  },
+  {
+    slug: "compress-pdf",
+    name: "Compress PDF",
+    shortName: "Compress",
+    category: "PDF",
+    description: "Reduce PDF file size without losing content.",
+    icon: <Archive className="w-5 h-5" />,
+    path: "/tools/compress-pdf",
+    local: true,
+    keywords: ["reduce", "pdf", "compress", "shrink"],
+  },
+  {
+    slug: "pdf-to-images",
+    name: "PDF → Images",
+    shortName: "PDF→Img",
+    category: "PDF",
+    description: "Convert PDF pages to PNG, JPG or WebP images.",
+    icon: <ImageIcon className="w-5 h-5" />,
+    path: "/tools/pdf-to-images",
+    local: true,
+    keywords: ["convert", "pdf", "images", "png", "jpg"],
+  },
+  {
+    slug: "images-to-pdf",
+    name: "Images → PDF",
+    shortName: "Img→PDF",
+    category: "PDF",
+    description: "Turn JPG, PNG or WebP images into a PDF document.",
+    icon: <FileImage className="w-5 h-5" />,
+    path: "/tools/images-to-pdf",
+    local: true,
+    keywords: ["convert", "pdf", "images", "jpg", "png"],
+  },
+  {
+    slug: "remove-background",
+    name: "Remove Background",
+    shortName: "BG Remove",
+    category: "Images",
+    description: "Remove image backgrounds directly in your browser.",
+    icon: <Eraser className="w-5 h-5" />,
+    path: "/tools/remove-background",
+    local: true,
+    keywords: ["background", "transparent", "image", "remove"],
+  },
+  {
+    slug: "image-compressor",
+    name: "Image Compressor",
+    shortName: "Compress",
+    category: "Images",
+    description: "Reduce image file size with adjustable quality.",
+    icon: <Minimize2 className="w-5 h-5" />,
+    path: "/tools/image-compressor",
+    local: true,
+    keywords: ["compress", "image", "jpg", "png", "webp"],
+  },
+  {
+    slug: "image-resizer",
+    name: "Image Resizer",
+    shortName: "Resize",
+    category: "Images",
+    description: "Resize images to any size with aspect ratio lock.",
+    icon: <Maximize2 className="w-5 h-5" />,
+    path: "/tools/image-resizer",
+    local: true,
+    keywords: ["resize", "scale", "image", "dimensions"],
+  },
+  {
+    slug: "image-converter",
+    name: "Image Converter",
+    shortName: "Convert",
+    category: "Images",
+    description: "Convert images between JPG, PNG and WebP.",
+    icon: <ArrowLeftRight className="w-5 h-5" />,
+    path: "/tools/image-converter",
+    local: true,
+    keywords: ["convert", "image", "jpg", "png", "webp"],
+  },
+  {
+    slug: "image-cropper",
+    name: "Image Cropper",
+    shortName: "Crop",
+    category: "Images",
+    description: "Crop images with preset aspect ratios or custom sizes.",
+    icon: <Crop className="w-5 h-5" />,
+    path: "/tools/image-cropper",
+    local: true,
+    keywords: ["crop", "image", "aspect", "ratio"],
+  },
+  {
+    slug: "screenshot-mockup",
+    name: "Screenshot Mockup",
+    shortName: "Mockup",
+    category: "Images",
+    description: "Present screenshots in beautiful device frames.",
+    icon: <MonitorSmartphone className="w-5 h-5" />,
+    path: "/tools/screenshot-mockup",
+    local: true,
+    keywords: ["mockup", "screenshot", "device", "frame"],
+  },
+  {
+    slug: "ocr",
+    name: "OCR — Image → Text",
+    shortName: "OCR",
+    category: "Text & Data",
+    description: "Extract text from images using on-device OCR.",
+    icon: <FileText className="w-5 h-5" />,
+    path: "/tools/ocr",
+    local: true,
+    keywords: ["ocr", "text", "image", "extract"],
+  },
+  {
+    slug: "json-formatter",
+    name: "JSON Formatter",
+    shortName: "JSON",
+    category: "Text & Data",
+    description: "Format, minify and validate JSON with syntax highlighting.",
+    icon: <Braces className="w-5 h-5" />,
+    path: "/tools/json-formatter",
+    local: true,
+    keywords: ["json", "format", "minify", "validate"],
+  },
+  {
+    slug: "csv-viewer",
+    name: "CSV Viewer",
+    shortName: "CSV",
+    category: "Text & Data",
+    description: "View, search, sort and edit CSV files in the browser.",
+    icon: <Table2 className="w-5 h-5" />,
+    path: "/tools/csv-viewer",
+    local: true,
+    keywords: ["csv", "table", "spreadsheet", "viewer"],
+  },
+  {
+    slug: "qr-generator",
+    name: "QR Generator",
+    shortName: "QR",
+    category: "Text & Data",
+    description: "Generate QR codes for URLs, text, email, Wi-Fi and more.",
+    icon: <QrCode className="w-5 h-5" />,
+    path: "/tools/qr-generator",
+    local: true,
+    keywords: ["qr", "code", "generate"],
+  },
+  {
+    slug: "password-generator",
+    name: "Password Generator",
+    shortName: "Password",
+    category: "Text & Data",
+    description: "Create strong, secure passwords with your rules.",
+    icon: <KeyRound className="w-5 h-5" />,
+    path: "/tools/password-generator",
+    local: true,
+    keywords: ["password", "generator", "secure", "random"],
+  },
+];
+
+export const TOOLS_BY_SLUG: Record<string, Tool> = Object.fromEntries(
+  TOOLS.map((t) => [t.slug, t])
+);
+
+export const CATEGORIES: ToolCategory[] = ["PDF", "Images", "Text & Data"];

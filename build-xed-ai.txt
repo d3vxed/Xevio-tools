@@ -1,0 +1,5441 @@
+﻿============================================================
+FILE: src\App.tsx
+============================================================
+
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Layout } from "./Layout";
+import Home from "./Home";
+import { Loader2 } from "lucide-react";
+
+/* Lazy-loaded tool pages */
+const MergePDF = lazy(() => import("./tools/merge-pdf"));
+const SplitPDF = lazy(() => import("./tools/split-pdf"));
+const CompressPDF = lazy(() => import("./tools/compress-pdf"));
+const PDFToImages = lazy(() => import("./tools/pdf-to-images"));
+const ImagesToPDF = lazy(() => import("./tools/images-to-pdf"));
+const RemoveBackground = lazy(() => import("./tools/remove-background"));
+const ImageCompressor = lazy(() => import("./tools/image-compressor"));
+const ImageResizer = lazy(() => import("./tools/image-resizer"));
+const ImageConverter = lazy(() => import("./tools/image-converter"));
+const ImageCropper = lazy(() => import("./tools/image-cropper"));
+const ScreenshotMockup = lazy(() => import("./tools/screenshot-mockup"));
+const OCR = lazy(() => import("./tools/ocr"));
+const JSONFormatter = lazy(() => import("./tools/json-formatter"));
+const CSVViewer = lazy(() => import("./tools/csv-viewer"));
+const QRGenerator = lazy(() => import("./tools/qr-generator"));
+const PasswordGenerator = lazy(() => import("./tools/password-generator"));
+
+const Privacy = lazy(() => import("./pages/Privacy"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+function Loading() {
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="flex items-center gap-2 text-[#91887D]">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">Loadingâ€¦</span>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="/tools/merge-pdf" element={<MergePDF />} />
+            <Route path="/tools/split-pdf" element={<SplitPDF />} />
+            <Route path="/tools/compress-pdf" element={<CompressPDF />} />
+            <Route path="/tools/pdf-to-images" element={<PDFToImages />} />
+            <Route path="/tools/images-to-pdf" element={<ImagesToPDF />} />
+            <Route path="/tools/remove-background" element={<RemoveBackground />} />
+            <Route path="/tools/image-compressor" element={<ImageCompressor />} />
+            <Route path="/tools/image-resizer" element={<ImageResizer />} />
+            <Route path="/tools/image-converter" element={<ImageConverter />} />
+            <Route path="/tools/image-cropper" element={<ImageCropper />} />
+            <Route path="/tools/screenshot-mockup" element={<ScreenshotMockup />} />
+            <Route path="/tools/ocr" element={<OCR />} />
+            <Route path="/tools/json-formatter" element={<JSONFormatter />} />
+            <Route path="/tools/csv-viewer" element={<CSVViewer />} />
+            <Route path="/tools/qr-generator" element={<QRGenerator />} />
+            <Route path="/tools/password-generator" element={<PasswordGenerator />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  );
+}
+
+
+============================================================
+FILE: src\Home.tsx
+============================================================
+
+import { Link } from "react-router-dom";
+import { TOOLS, CATEGORIES, TOOLS_BY_SLUG, type ToolCategory } from "./tools/registry";
+import { useFavorites, useRecent } from "./Layout";
+import { Lock, Sparkles, ArrowRight, Star, Clock, Shield } from "lucide-react";
+import { cn } from "./utils/cn";
+
+function CategorySection({
+  category,
+  isFav,
+  toggle,
+}: {
+  category: ToolCategory;
+  isFav: (s: string) => boolean;
+  toggle: (s: string) => void;
+}) {
+  const items = TOOLS.filter((t) => t.category === category);
+  return (
+    <section>
+      <div className="flex items-baseline justify-between mb-4">
+        <h2 className="text-xl font-semibold tracking-tight">{category}</h2>
+        <span className="text-xs text-[#91887D]">{items.length} tools</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {items.map((t) => (
+          <Link
+            key={t.slug}
+            to={t.path}
+            className="group relative block bg-[#191715] border border-[#342821] rounded-xl p-5 hover:border-[#C96B4B]/50 hover:bg-[#25211D]/60 transition-all"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#25211D] border border-[#342821] flex items-center justify-center text-[#C96B4B] group-hover:bg-[#C96B4B]/10 transition-colors">
+                {t.icon}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggle(t.slug);
+                }}
+                aria-label={isFav(t.slug) ? "Remove from favorites" : "Add to favorites"}
+                className={cn(
+                  "p-1 rounded-md transition-colors",
+                  isFav(t.slug)
+                    ? "text-[#C96B4B]"
+                    : "text-[#91887D] opacity-0 group-hover:opacity-100 hover:text-[#E8E1D5]"
+                )}
+              >
+                <Star className={cn("w-4 h-4", isFav(t.slug) && "fill-current")} />
+              </button>
+            </div>
+            <h3 className="mt-4 text-sm font-semibold text-[#E8E1D5]">{t.name}</h3>
+            <p className="mt-1 text-xs text-[#91887D] line-clamp-2">{t.description}</p>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400/90">
+                <Lock className="w-3 h-3" /> Local
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs text-[#C96B4B] opacity-0 group-hover:opacity-100 transition-opacity">
+                Open <ArrowRight className="w-3 h-3" />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function Home() {
+  const { isFav, toggle } = useFavorites();
+  const { recent } = useRecent();
+
+  return (
+    <div className="fade-in">
+      {/* HERO */}
+      <section className="relative py-12 md:py-20">
+        {/* Subtle background accent */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#C96B4B]/5 blur-3xl" />
+        </div>
+        <div className="flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#191715] border border-[#342821] text-xs text-[#91887D] mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-[#C96B4B]" />
+            <span>Free tools. Private by design.</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-semibold tracking-tighter bg-gradient-to-b from-[#E8E1D5] to-[#91887D] bg-clip-text text-transparent">
+            XEVIO
+          </h1>
+          <p className="mt-5 text-2xl md:text-3xl font-medium text-[#E8E1D5] max-w-2xl">
+            Free tools.
+            <br />
+            <span className="text-[#C96B4B]">Private by design.</span>
+          </p>
+          <p className="mt-4 text-sm md:text-base text-[#91887D] max-w-xl">
+            PDF, image, text and utility tools that work directly in your browser.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <a href="#tools" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#C96B4B] hover:bg-[#E0805C] rounded-lg font-medium text-sm transition-colors">
+              Explore Tools <ArrowRight className="w-4 h-4" />
+            </a>
+            <Link
+              to="/privacy"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#342821] hover:border-[#C96B4B]/40 hover:bg-[#191715] rounded-lg font-medium text-sm transition-colors"
+            >
+              <Shield className="w-4 h-4" /> How privacy works
+            </Link>
+          </div>
+
+          <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-[#191715] border border-[#342821] rounded-full text-sm">
+            <Lock className="w-4 h-4 text-[#C96B4B]" />
+            <span className="text-[#E8E1D5]">Your files stay on your device</span>
+          </div>
+        </div>
+      </section>
+
+      {/* STATS / FEATURES */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-16">
+        {[
+          { label: "Tools", value: `${TOOLS.length}` },
+          { label: "Categories", value: `${CATEGORIES.length}` },
+          { label: "No signup", value: "Required" },
+          { label: "Files", value: "Never uploaded" },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="bg-[#191715] border border-[#342821] rounded-xl p-4 text-center"
+          >
+            <div className="text-2xl font-semibold text-[#E8E1D5]">{s.value}</div>
+            <div className="text-xs text-[#91887D] mt-1">{s.label}</div>
+          </div>
+        ))}
+      </section>
+
+      {/* RECENT TOOLS */}
+      {recent.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-4 h-4 text-[#C96B4B]" />
+            <h2 className="text-lg font-semibold tracking-tight">Recently used</h2>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {recent.map((slug) => {
+              const t = TOOLS_BY_SLUG[slug];
+              if (!t) return null;
+              return (
+                <Link
+                  key={slug}
+                  to={t.path}
+                  className="flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-[#191715] border border-[#342821] hover:border-[#C96B4B]/40 rounded-lg text-sm"
+                >
+                  <span className="text-[#C96B4B]">{t.icon}</span>
+                  <span>{t.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* TOOLS BY CATEGORY */}
+      <div id="tools" className="space-y-12 scroll-mt-8">
+        {CATEGORIES.map((cat) => (
+          <CategorySection key={cat} category={cat} isFav={isFav} toggle={toggle} />
+        ))}
+      </div>
+
+      {/* PRIVACY CALLOUT */}
+      <section className="mt-16 mb-8 bg-gradient-to-br from-[#191715] to-[#11100F] border border-[#342821] rounded-2xl p-8 md:p-10">
+        <div className="flex items-center gap-2 mb-3 text-[#C96B4B]">
+          <Lock className="w-5 h-5" />
+          <span className="text-xs font-semibold uppercase tracking-wider">Privacy</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight max-w-2xl">
+          Your files never leave your device.
+        </h2>
+        <p className="mt-3 text-[#91887D] max-w-2xl">
+          Xevio is designed to process files locally in your browser whenever
+          possible. No account required. No cloud storage. Just open a tool and
+          get to work.
+        </p>
+        <ul className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            "No uploads to servers",
+            "No account required",
+            "Everything in your browser",
+          ].map((t) => (
+            <li
+              key={t}
+              className="flex items-center gap-2 text-sm text-[#E8E1D5] bg-[#11100F] border border-[#342821] rounded-lg px-3 py-2"
+            >
+              <div className="w-4 h-4 rounded-full bg-[#C96B4B]/20 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#C96B4B]" />
+              </div>
+              {t}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: src\index.css
+============================================================
+
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #11100F;
+  --color-surface: #191715;
+  --color-elevated: #25211D;
+  --color-text: #E8E1D5;
+  --color-muted: #91887D;
+  --color-accent: #C96B4B;
+  --color-accent-hover: #E0805C;
+  --color-border: #342821;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  background-color: #11100F;
+  color: #E8E1D5;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #11100F; }
+::-webkit-scrollbar-thumb { background: #342821; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #91887D; }
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid #C96B4B;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fade-in 0.4s ease-out; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #191715 0%, #25211D 50%, #191715 100%);
+  background-size: 800px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* React easy crop override */
+.reactEasyCrop_Container { background: #11100F !important; }
+.reactEasyCrop_CropArea { border-color: #C96B4B !important; }
+
+/* JSON / Code block font */
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+
+============================================================
+FILE: src\Layout.tsx
+============================================================
+
+import { useEffect, useMemo, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { TOOLS, CATEGORIES, type ToolCategory } from "./tools/registry";
+import { cn } from "./utils/cn";
+import {
+  Search,
+  X,
+  Menu,
+  Star,
+  Clock,
+  Lock,
+  Sparkles,
+  ChevronDown,
+} from "lucide-react";
+
+/* ============================================================
+   FAVORITES & RECENT TOOLS â€” localStorage backed
+   ============================================================ */
+const FAV_KEY = "xevio:favorites";
+const RECENT_KEY = "xevio:recent";
+
+export function useFavorites() {
+  const [favs, setFavs] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const toggle = (slug: string) => {
+    const next = favs.includes(slug)
+      ? favs.filter((s) => s !== slug)
+      : [...favs, slug];
+    setFavs(next);
+    localStorage.setItem(FAV_KEY, JSON.stringify(next));
+  };
+  const isFav = (slug: string) => favs.includes(slug);
+  return { favs, toggle, isFav };
+}
+
+export function useRecent() {
+  const [recent, setRecent] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const push = (slug: string) => {
+    setRecent((prev) => {
+      const next = [slug, ...prev.filter((s) => s !== slug)].slice(0, 6);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+  return { recent, push };
+}
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+function ToolSearch() {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const results = useMemo(() => {
+    if (!q.trim()) return [];
+    const needle = q.toLowerCase().trim();
+    return TOOLS.filter(
+      (t) =>
+        t.name.toLowerCase().includes(needle) ||
+        t.description.toLowerCase().includes(needle) ||
+        t.keywords.some((k) => k.includes(needle))
+    ).slice(0, 6);
+  }, [q]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen(true);
+      }
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center gap-2 px-3 py-2 bg-[#191715] border border-[#342821] rounded-lg text-sm text-[#91887D] hover:border-[#C96B4B]/40 transition-colors"
+      >
+        <Search className="w-4 h-4" />
+        <span className="flex-1 text-left">Search toolsâ€¦</span>
+        <span className="text-[10px] bg-[#25211D] px-1.5 py-0.5 rounded border border-[#342821]">
+          âŒ˜K
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm"
+      onClick={() => setOpen(false)}
+    >
+      <div
+        className="w-full max-w-xl bg-[#191715] border border-[#342821] rounded-xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#342821]">
+          <Search className="w-4 h-4 text-[#91887D]" />
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search toolsâ€¦"
+            className="flex-1 bg-transparent text-sm text-[#E8E1D5] placeholder:text-[#91887D] outline-none"
+          />
+          <button
+            onClick={() => setOpen(false)}
+            className="text-[#91887D] hover:text-[#E8E1D5]"
+            aria-label="Close search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="max-h-[50vh] overflow-y-auto p-2">
+          {results.length === 0 ? (
+            <div className="py-8 text-center text-sm text-[#91887D]">
+              No tools match â€œ{q}â€
+            </div>
+          ) : (
+            results.map((t) => (
+              <button
+                key={t.slug}
+                onClick={() => {
+                  navigate(t.path);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#25211D] text-left"
+              >
+                <div className="w-9 h-9 rounded-md bg-[#25211D] flex items-center justify-center text-[#C96B4B]">
+                  {t.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[#E8E1D5]">{t.name}</p>
+                  <p className="text-xs text-[#91887D] truncate">{t.description}</p>
+                </div>
+                <span className="text-[10px] text-[#91887D] uppercase tracking-wider">
+                  {t.category}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+function SidebarContent({
+  favs,
+  isFav,
+  toggle,
+  recent,
+  onClose,
+}: {
+  favs: string[];
+  isFav: (s: string) => boolean;
+  toggle: (s: string) => void;
+  recent: string[];
+  onClose?: () => void;
+}) {
+  const { pathname } = useLocation();
+
+  const grouped: Record<ToolCategory, typeof TOOLS> = {
+    PDF: [],
+    Images: [],
+    "Text & Data": [],
+  };
+  TOOLS.forEach((t) => grouped[t.category].push(t));
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 group" onClick={onClose}>
+          <div className="w-8 h-8 rounded-lg bg-[#C96B4B] flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight text-[#E8E1D5]">
+            Xevio
+          </span>
+        </Link>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 text-[#91887D] hover:text-[#E8E1D5]"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      <div className="px-4">
+        <ToolSearch />
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {/* Favorites */}
+        {favs.length > 0 && (
+          <div>
+            <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[#91887D] mb-1.5 flex items-center gap-1.5">
+              <Star className="w-3 h-3 fill-current" /> Favorites
+            </h3>
+            <div className="space-y-0.5">
+              {favs.map((slug) => {
+                const t = TOOLS.find((x) => x.slug === slug);
+                if (!t) return null;
+                return (
+                  <NavLink
+                    key={slug}
+                    to={t.path}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors",
+                        isActive
+                          ? "bg-[#C96B4B]/10 text-[#E0805C]"
+                          : "text-[#E8E1D5] hover:bg-[#25211D]"
+                      )
+                    }
+                  >
+                    <span className="text-[#C96B4B]">{t.icon}</span>
+                    <span className="flex-1 truncate">{t.name}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Recent */}
+        {recent.length > 0 && (
+          <div>
+            <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[#91887D] mb-1.5 flex items-center gap-1.5">
+              <Clock className="w-3 h-3" /> Recent
+            </h3>
+            <div className="space-y-0.5">
+              {recent.map((slug) => {
+                const t = TOOLS.find((x) => x.slug === slug);
+                if (!t) return null;
+                return (
+                  <NavLink
+                    key={slug}
+                    to={t.path}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors",
+                        isActive
+                          ? "bg-[#C96B4B]/10 text-[#E0805C]"
+                          : "text-[#E8E1D5] hover:bg-[#25211D]"
+                      )
+                    }
+                  >
+                    <span className="text-[#C96B4B]">{t.icon}</span>
+                    <span className="flex-1 truncate">{t.name}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Categories */}
+        {CATEGORIES.map((cat) => (
+          <div key={cat}>
+            <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wider text-[#91887D] mb-1.5">
+              {cat}
+            </h3>
+            <div className="space-y-0.5">
+              {grouped[cat].map((t) => (
+                <NavLink
+                  key={t.slug}
+                  to={t.path}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    cn(
+                      "group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors",
+                      isActive
+                        ? "bg-[#C96B4B]/10 text-[#E0805C]"
+                        : "text-[#E8E1D5] hover:bg-[#25211D]",
+                      pathname === "/" && "text-[#E8E1D5]"
+                    )
+                  }
+                >
+                  <span className="text-[#C96B4B]">{t.icon}</span>
+                  <span className="flex-1 truncate">{t.name}</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggle(t.slug);
+                    }}
+                    className={cn(
+                      "opacity-0 group-hover:opacity-100 p-0.5 rounded transition-opacity",
+                      isFav(t.slug) ? "opacity-100 text-[#C96B4B]" : "text-[#91887D] hover:text-[#E8E1D5]"
+                    )}
+                    aria-label={isFav(t.slug) ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Star className={cn("w-3.5 h-3.5", isFav(t.slug) && "fill-current")} />
+                  </button>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-4 border-t border-[#342821]">
+        <div className="flex items-center gap-2 text-xs text-[#91887D]">
+          <Lock className="w-3.5 h-3.5" />
+          <span>Private by design</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+export function Layout() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { favs, toggle, isFav } = useFavorites();
+  const { recent, push } = useRecent();
+  const { pathname } = useLocation();
+
+  // Track recently used tools
+  useEffect(() => {
+    const match = TOOLS.find((t) => t.path === pathname);
+    if (match) push(match.slug);
+  }, [pathname, push]);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when drawer open
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [drawerOpen]);
+
+  return (
+    <div className="flex h-full min-h-screen bg-[#11100F] text-[#E8E1D5]">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-64 flex-shrink-0 flex-col border-r border-[#342821] bg-[#11100F] sticky top-0 h-screen">
+        <SidebarContent favs={favs} isFav={isFav} toggle={toggle} recent={recent} />
+      </aside>
+
+      {/* Mobile drawer */}
+      {drawerOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <aside className="fixed inset-y-0 left-0 z-50 w-72 bg-[#11100F] border-r border-[#342821] lg:hidden">
+            <SidebarContent
+              favs={favs}
+              isFav={isFav}
+              toggle={toggle}
+              recent={recent}
+              onClose={() => setDrawerOpen(false)}
+            />
+          </aside>
+        </>
+      )}
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar (mobile) */}
+        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-[#342821] bg-[#11100F] sticky top-0 z-30">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-1.5 text-[#E8E1D5] hover:bg-[#25211D] rounded-md"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-[#C96B4B] flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-semibold tracking-tight">Xevio</span>
+          </Link>
+        </header>
+
+        <main className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-10">
+          <Outlet />
+        </main>
+
+        <footer className="border-t border-[#342821] px-4 md:px-8 py-6 text-xs text-[#91887D]">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5" />
+              <span>
+                Xevio processes your files locally in your browser whenever possible.
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/privacy" className="hover:text-[#E8E1D5]">
+                Privacy
+              </Link>
+              <Link to="/" className="hover:text-[#E8E1D5]">
+                Home
+              </Link>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+export { ChevronDown };
+
+
+============================================================
+FILE: src\main.tsx
+============================================================
+
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+
+
+============================================================
+FILE: src\components\ui.tsx
+============================================================
+
+import { useCallback, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { Upload, X, File as FileIcon, Loader2, Check, AlertCircle, ChevronLeft, Lock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { cn } from "../utils/cn";
+import type { Tool } from "../tools/registry";
+
+/* ============================================================
+   FORMAT HELPERS
+   ============================================================ */
+export function formatBytes(bytes: number, decimals = 2) {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + " " + sizes[i];
+}
+
+/* ============================================================
+   BUTTON
+   ============================================================ */
+export function Button({
+  children,
+  variant = "primary",
+  size = "md",
+  className,
+  disabled,
+  loading,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "ghost" | "outline";
+  size?: "sm" | "md" | "lg";
+  loading?: boolean;
+}) {
+  const base =
+    "inline-flex items-center justify-center gap-2 font-medium transition-colors rounded-lg focus-visible:outline-accent whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed";
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-sm",
+    lg: "px-5 py-2.5 text-base",
+  };
+  const variants = {
+    primary:
+      "bg-[#C96B4B] text-white hover:bg-[#E0805C] active:bg-[#E0805C]/80",
+    secondary:
+      "bg-[#25211D] text-[#E8E1D5] hover:bg-[#342821] border border-[#342821]",
+    ghost: "text-[#E8E1D5] hover:bg-[#25211D]",
+    outline:
+      "border border-[#342821] text-[#E8E1D5] hover:bg-[#25211D] hover:border-[#C96B4B]/40",
+  };
+  return (
+    <button
+      {...props}
+      disabled={disabled || loading}
+      className={cn(base, sizes[size], variants[variant], className)}
+    >
+      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+      {children}
+    </button>
+  );
+}
+
+/* ============================================================
+   PRIVACY NOTICE
+   ============================================================ */
+export function PrivacyNotice({ text }: { text?: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-[#91887D]">
+      <Lock className="w-3.5 h-3.5" />
+      <span>{text ?? "Processed locally in your browser whenever supported."}</span>
+    </div>
+  );
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+export function ProgressBar({ progress, label }: { progress: number; label?: string }) {
+  return (
+    <div className="w-full">
+      {label && (
+        <div className="flex justify-between text-xs text-[#91887D] mb-1.5">
+          <span>{label}</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+      )}
+      <div className="h-1.5 w-full bg-[#25211D] rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#C96B4B] transition-all duration-300"
+          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   FILE DROPZONE
+   ============================================================ */
+export function FileDropzone({
+  onFiles,
+  accept,
+  multiple = false,
+  label = "Drop your files here",
+  sublabel,
+  disabled,
+}: {
+  onFiles: (files: File[]) => void;
+  accept?: string;
+  multiple?: boolean;
+  label?: string;
+  sublabel?: string;
+  disabled?: boolean;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      if (disabled) return;
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length) onFiles(multiple ? files : [files[0]]);
+    },
+    [onFiles, multiple, disabled]
+  );
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!disabled) setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
+      onClick={() => !disabled && inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && !disabled) inputRef.current?.click();
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      className={cn(
+        "relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 text-center transition-colors cursor-pointer",
+        dragging
+          ? "border-[#C96B4B] bg-[#C96B4B]/5"
+          : "border-[#342821] hover:border-[#C96B4B]/60 hover:bg-[#191715]",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          if (files.length) onFiles(multiple ? files : [files[0]]);
+          if (inputRef.current) inputRef.current.value = "";
+        }}
+      />
+      <div className="w-12 h-12 rounded-full bg-[#25211D] flex items-center justify-center mb-4">
+        <Upload className="w-5 h-5 text-[#C96B4B]" />
+      </div>
+      <p className="text-[#E8E1D5] font-medium">{label}</p>
+      {sublabel && <p className="text-sm text-[#91887D] mt-1">{sublabel}</p>}
+      <p className="text-xs text-[#91887D] mt-4">
+        or <span className="text-[#C96B4B] underline underline-offset-2">browse files</span>
+      </p>
+    </div>
+  );
+}
+
+/* ============================================================
+   FILE LIST ITEM
+   ============================================================ */
+export type FileStatus = "pending" | "processing" | "done" | "error";
+
+export function FileListItem({
+  file,
+  status,
+  progress,
+  onRemove,
+  subtitle,
+}: {
+  file: File;
+  status: FileStatus;
+  progress?: number;
+  onRemove?: () => void;
+  subtitle?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-3 bg-[#191715] border border-[#342821] rounded-lg">
+      <div className="w-9 h-9 rounded-md bg-[#25211D] flex items-center justify-center flex-shrink-0">
+        {status === "processing" ? (
+          <Loader2 className="w-4 h-4 text-[#C96B4B] animate-spin" />
+        ) : status === "done" ? (
+          <Check className="w-4 h-4 text-emerald-400" />
+        ) : status === "error" ? (
+          <AlertCircle className="w-4 h-4 text-rose-400" />
+        ) : (
+          <FileIcon className="w-4 h-4 text-[#91887D]" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-[#E8E1D5] truncate">{file.name}</p>
+        <p className="text-xs text-[#91887D]">
+          {subtitle ?? formatBytes(file.size)}
+          {progress !== undefined && status === "processing" && ` â€¢ ${Math.round(progress)}%`}
+        </p>
+      </div>
+      {onRemove && (
+        <button
+          onClick={onRemove}
+          aria-label="Remove file"
+          className="p-1.5 text-[#91887D] hover:text-[#E8E1D5] rounded-md hover:bg-[#25211D]"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   ERROR DISPLAY
+   ============================================================ */
+export function ErrorDisplay({
+  title,
+  message,
+  onRetry,
+}: {
+  title?: string;
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="p-5 bg-rose-500/5 border border-rose-500/20 rounded-lg text-center">
+      <AlertCircle className="w-6 h-6 text-rose-400 mx-auto mb-2" />
+      <p className="text-sm font-medium text-[#E8E1D5]">{title ?? "Something went wrong."}</p>
+      <p className="text-sm text-[#91887D] mt-1">{message}</p>
+      {onRetry && (
+        <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
+          Try Again
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   TOOL LAYOUT
+   ============================================================ */
+export function ToolLayout({
+  tool,
+  children,
+}: {
+  tool: Tool;
+  children: ReactNode;
+}) {
+  const navigate = useNavigate();
+  return (
+    <div className="fade-in">
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 text-sm text-[#91887D] hover:text-[#E8E1D5] mb-4 transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back
+      </button>
+      <div className="flex items-start gap-3 mb-6">
+        <div className="w-11 h-11 rounded-xl bg-[#C96B4B]/10 border border-[#C96B4B]/20 flex items-center justify-center text-[#C96B4B]">
+          {tool.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl md:text-3xl font-semibold text-[#E8E1D5] tracking-tight">
+            {tool.name}
+          </h1>
+          <p className="text-sm text-[#91887D] mt-1">{tool.description}</p>
+        </div>
+      </div>
+      <div className="bg-[#191715] border border-[#342821] rounded-2xl p-5 md:p-7">
+        {children}
+      </div>
+      <div className="mt-5">
+        <PrivacyNotice />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   EMPTY STATE (tool category)
+   ============================================================ */
+export function EmptyState({
+  icon,
+  title,
+  description,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="text-center py-10">
+      {icon && <div className="inline-flex mb-3 text-[#91887D]">{icon}</div>}
+      <h3 className="text-sm font-medium text-[#E8E1D5]">{title}</h3>
+      {description && <p className="text-xs text-[#91887D] mt-1">{description}</p>}
+    </div>
+  );
+}
+
+/* ============================================================
+   DOWNLOAD RESULT
+   ============================================================ */
+export function DownloadResult({
+  blob,
+  filename,
+  label = "Download",
+}: {
+  blob: Blob | null;
+  filename: string;
+  label?: string;
+}) {
+  if (!blob) return null;
+  const url = URL.createObjectURL(blob);
+  return (
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-4 bg-[#25211D] border border-[#C96B4B]/20 rounded-lg">
+      <Check className="w-5 h-5 text-emerald-400 hidden sm:block" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-[#E8E1D5]">Ready to download</p>
+        <p className="text-xs text-[#91887D] truncate">
+          {filename} â€¢ {formatBytes(blob.size)}
+        </p>
+      </div>
+      <a href={url} download={filename}>
+        <Button>{label}</Button>
+      </a>
+    </div>
+  );
+}
+
+/* Re-export Link for convenience */
+export { Link };
+
+
+============================================================
+FILE: src\pages\NotFound.tsx
+============================================================
+
+import { Link } from "react-router-dom";
+import { Button } from "../components/ui";
+
+export default function NotFound() {
+  return (
+    <div className="fade-in flex flex-col items-center justify-center py-24 text-center">
+      <div className="text-6xl font-semibold tracking-tighter bg-gradient-to-b from-[#E8E1D5] to-[#91887D] bg-clip-text text-transparent">
+        404
+      </div>
+      <h1 className="mt-2 text-xl font-medium">Page not found</h1>
+      <p className="mt-2 text-sm text-[#91887D] max-w-sm">
+        The page you're looking for doesn't exist or has moved.
+      </p>
+      <div className="mt-6 flex gap-2">
+        <Link to="/">
+          <Button>Go home</Button>
+        </Link>
+        <Link to="/tools/json-formatter">
+          <Button variant="outline">Try JSON Formatter</Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: src\pages\Privacy.tsx
+============================================================
+
+import { Link } from "react-router-dom";
+import { TOOLS } from "../tools/registry";
+import { Lock, ShieldCheck, Server, Eye, HardDrive, Users } from "lucide-react";
+
+export default function Privacy() {
+  return (
+    <div className="fade-in max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 text-[#C96B4B] mb-3">
+        <Lock className="w-5 h-5" />
+        <span className="text-xs font-semibold uppercase tracking-wider">Privacy</span>
+      </div>
+      <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+        Your files stay on your device.
+      </h1>
+      <p className="mt-4 text-[#91887D]">
+        Xevio is designed to process files locally in your browser whenever
+        possible. We built Xevio around the belief that sensitive documents
+        shouldn't travel over the internet to reach a utility that does its
+        work in milliseconds anyway.
+      </p>
+
+      <section className="mt-10 space-y-3">
+        {[
+          {
+            icon: <HardDrive className="w-4 h-4" />,
+            title: "No uploads for supported tools",
+            body: "Every tool marked as 'Local' processes your files entirely in your browser using client-side JavaScript and WebAssembly. Your PDFs, images, and text never leave your device.",
+          },
+          {
+            icon: <Users className="w-4 h-4" />,
+            title: "No account required",
+            body: "Xevio works the moment you open it. There is no sign-up, no login, no cloud account, no subscription.",
+          },
+          {
+            icon: <Server className="w-4 h-4" />,
+            title: "No cloud storage",
+            body: "We don't store your files. We don't have a file server. We don't have a database of your documents. Your data is yours.",
+          },
+          {
+            icon: <Eye className="w-4 h-4" />,
+            title: "No analytics on file content",
+            body: "Because files are processed locally, we never see them. We don't log filenames, we don't read file contents, we don't build profiles from your usage.",
+          },
+          {
+            icon: <ShieldCheck className="w-4 h-4" />,
+            title: "Open source foundations",
+            body: "Xevio is built on trusted open-source libraries: pdf-lib, pdf.js, Tesseract.js, jsPDF, and others. You can verify what runs in your browser.",
+          },
+        ].map((item) => (
+          <div
+            key={item.title}
+            className="flex gap-4 p-5 bg-[#191715] border border-[#342821] rounded-xl"
+          >
+            <div className="w-9 h-9 rounded-lg bg-[#C96B4B]/10 border border-[#C96B4B]/20 flex items-center justify-center text-[#C96B4B] flex-shrink-0">
+              {item.icon}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-[#E8E1D5]">{item.title}</h3>
+              <p className="text-sm text-[#91887D] mt-1">{item.body}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold tracking-tight mb-3">
+          What's stored locally?
+        </h2>
+        <p className="text-[#91887D] mb-3">
+          Xevio stores a few non-sensitive preferences in your browser's
+          localStorage so the experience feels personal:
+        </p>
+        <ul className="list-disc list-inside text-[#91887D] space-y-1 text-sm">
+          <li>Your favorite tools</li>
+          <li>Recently used tools</li>
+        </ul>
+        <p className="text-[#91887D] mt-3 text-sm">
+          This data never leaves your browser and is never sent to our servers.
+        </p>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold tracking-tight mb-3">
+          About "local" processing
+        </h2>
+        <p className="text-[#91887D] text-sm">
+          We mark tools as <span className="text-[#E8E1D5]">Local</span> when
+          their implementation runs entirely in your browser. Some tools may
+          use WebAssembly modules or large OCR models that download on first
+          use; these still run locally â€” the models are cached and processing
+          happens on your device. We will never mark a tool as local if it
+          requires sending files to a server.
+        </p>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold tracking-tight mb-3">Tools</h2>
+        <div className="grid sm:grid-cols-2 gap-2">
+          {TOOLS.map((t) => (
+            <div
+              key={t.slug}
+              className="flex items-center justify-between p-3 bg-[#191715] border border-[#342821] rounded-lg"
+            >
+              <span className="text-sm">{t.name}</span>
+              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 uppercase">
+                <Lock className="w-3 h-3" /> Local
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="mt-10">
+        <Link
+          to="/"
+          className="text-sm text-[#C96B4B] hover:text-[#E0805C]"
+        >
+          â† Back to tools
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+
+============================================================
+FILE: src\tools\registry.tsx
+============================================================
+
+import type { ReactNode } from "react";
+import {
+  Merge,
+  Scissors,
+  Archive,
+  Image as ImageIcon,
+  FileImage,
+  Eraser,
+  Minimize2,
+  Maximize2,
+  ArrowLeftRight,
+  Crop,
+  MonitorSmartphone,
+  FileText,
+  Braces,
+  Table2,
+  QrCode,
+  KeyRound,
+} from "lucide-react";
+
+export type ToolCategory = "PDF" | "Images" | "Text & Data";
+
+export type Tool = {
+  slug: string;
+  name: string;
+  shortName: string;
+  category: ToolCategory;
+  description: string;
+  icon: ReactNode;
+  path: string;
+  local: boolean;
+  keywords: string[];
+};
+
+export const TOOLS: Tool[] = [
+  {
+    slug: "merge-pdf",
+    name: "Merge PDF",
+    shortName: "Merge",
+    category: "PDF",
+    description: "Combine multiple PDFs into one file, fully in your browser.",
+    icon: <Merge className="w-5 h-5" />,
+    path: "/tools/merge-pdf",
+    local: true,
+    keywords: ["combine", "join", "pdf", "merge"],
+  },
+  {
+    slug: "split-pdf",
+    name: "Split PDF",
+    shortName: "Split",
+    category: "PDF",
+    description: "Extract pages or ranges from a PDF file.",
+    icon: <Scissors className="w-5 h-5" />,
+    path: "/tools/split-pdf",
+    local: true,
+    keywords: ["extract", "pdf", "pages", "split"],
+  },
+  {
+    slug: "compress-pdf",
+    name: "Compress PDF",
+    shortName: "Compress",
+    category: "PDF",
+    description: "Reduce PDF file size without losing content.",
+    icon: <Archive className="w-5 h-5" />,
+    path: "/tools/compress-pdf",
+    local: true,
+    keywords: ["reduce", "pdf", "compress", "shrink"],
+  },
+  {
+    slug: "pdf-to-images",
+    name: "PDF â†’ Images",
+    shortName: "PDFâ†’Img",
+    category: "PDF",
+    description: "Convert PDF pages to PNG, JPG or WebP images.",
+    icon: <ImageIcon className="w-5 h-5" />,
+    path: "/tools/pdf-to-images",
+    local: true,
+    keywords: ["convert", "pdf", "images", "png", "jpg"],
+  },
+  {
+    slug: "images-to-pdf",
+    name: "Images â†’ PDF",
+    shortName: "Imgâ†’PDF",
+    category: "PDF",
+    description: "Turn JPG, PNG or WebP images into a PDF document.",
+    icon: <FileImage className="w-5 h-5" />,
+    path: "/tools/images-to-pdf",
+    local: true,
+    keywords: ["convert", "pdf", "images", "jpg", "png"],
+  },
+  {
+    slug: "remove-background",
+    name: "Remove Background",
+    shortName: "BG Remove",
+    category: "Images",
+    description: "Remove image backgrounds directly in your browser.",
+    icon: <Eraser className="w-5 h-5" />,
+    path: "/tools/remove-background",
+    local: true,
+    keywords: ["background", "transparent", "image", "remove"],
+  },
+  {
+    slug: "image-compressor",
+    name: "Image Compressor",
+    shortName: "Compress",
+    category: "Images",
+    description: "Reduce image file size with adjustable quality.",
+    icon: <Minimize2 className="w-5 h-5" />,
+    path: "/tools/image-compressor",
+    local: true,
+    keywords: ["compress", "image", "jpg", "png", "webp"],
+  },
+  {
+    slug: "image-resizer",
+    name: "Image Resizer",
+    shortName: "Resize",
+    category: "Images",
+    description: "Resize images to any size with aspect ratio lock.",
+    icon: <Maximize2 className="w-5 h-5" />,
+    path: "/tools/image-resizer",
+    local: true,
+    keywords: ["resize", "scale", "image", "dimensions"],
+  },
+  {
+    slug: "image-converter",
+    name: "Image Converter",
+    shortName: "Convert",
+    category: "Images",
+    description: "Convert images between JPG, PNG and WebP.",
+    icon: <ArrowLeftRight className="w-5 h-5" />,
+    path: "/tools/image-converter",
+    local: true,
+    keywords: ["convert", "image", "jpg", "png", "webp"],
+  },
+  {
+    slug: "image-cropper",
+    name: "Image Cropper",
+    shortName: "Crop",
+    category: "Images",
+    description: "Crop images with preset aspect ratios or custom sizes.",
+    icon: <Crop className="w-5 h-5" />,
+    path: "/tools/image-cropper",
+    local: true,
+    keywords: ["crop", "image", "aspect", "ratio"],
+  },
+  {
+    slug: "screenshot-mockup",
+    name: "Screenshot Mockup",
+    shortName: "Mockup",
+    category: "Images",
+    description: "Present screenshots in beautiful device frames.",
+    icon: <MonitorSmartphone className="w-5 h-5" />,
+    path: "/tools/screenshot-mockup",
+    local: true,
+    keywords: ["mockup", "screenshot", "device", "frame"],
+  },
+  {
+    slug: "ocr",
+    name: "OCR â€” Image â†’ Text",
+    shortName: "OCR",
+    category: "Text & Data",
+    description: "Extract text from images using on-device OCR.",
+    icon: <FileText className="w-5 h-5" />,
+    path: "/tools/ocr",
+    local: true,
+    keywords: ["ocr", "text", "image", "extract"],
+  },
+  {
+    slug: "json-formatter",
+    name: "JSON Formatter",
+    shortName: "JSON",
+    category: "Text & Data",
+    description: "Format, minify and validate JSON with syntax highlighting.",
+    icon: <Braces className="w-5 h-5" />,
+    path: "/tools/json-formatter",
+    local: true,
+    keywords: ["json", "format", "minify", "validate"],
+  },
+  {
+    slug: "csv-viewer",
+    name: "CSV Viewer",
+    shortName: "CSV",
+    category: "Text & Data",
+    description: "View, search, sort and edit CSV files in the browser.",
+    icon: <Table2 className="w-5 h-5" />,
+    path: "/tools/csv-viewer",
+    local: true,
+    keywords: ["csv", "table", "spreadsheet", "viewer"],
+  },
+  {
+    slug: "qr-generator",
+    name: "QR Generator",
+    shortName: "QR",
+    category: "Text & Data",
+    description: "Generate QR codes for URLs, text, email, Wi-Fi and more.",
+    icon: <QrCode className="w-5 h-5" />,
+    path: "/tools/qr-generator",
+    local: true,
+    keywords: ["qr", "code", "generate"],
+  },
+  {
+    slug: "password-generator",
+    name: "Password Generator",
+    shortName: "Password",
+    category: "Text & Data",
+    description: "Create strong, secure passwords with your rules.",
+    icon: <KeyRound className="w-5 h-5" />,
+    path: "/tools/password-generator",
+    local: true,
+    keywords: ["password", "generator", "secure", "random"],
+  },
+];
+
+export const TOOLS_BY_SLUG: Record<string, Tool> = Object.fromEntries(
+  TOOLS.map((t) => [t.slug, t])
+);
+
+export const CATEGORIES: ToolCategory[] = ["PDF", "Images", "Text & Data"];
+
+
+============================================================
+FILE: src\tools\compress-pdf\index.tsx
+============================================================
+
+import { useState } from "react";
+import { PDFDocument } from "pdf-lib";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ProgressBar,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { FileText, Loader2, TrendingDown } from "lucide-react";
+
+export default function CompressPDF() {
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<Blob | null>(null);
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [level, setLevel] = useState<"low" | "medium" | "high">("medium");
+  const tool = TOOLS_BY_SLUG["compress-pdf"];
+
+  const load = async (f: File) => {
+    setError(null);
+    setResult(null);
+    setFile(f);
+  };
+
+  const compress = async () => {
+    if (!file) return;
+    setError(null);
+    setWorking(true);
+    setProgress(10);
+    try {
+      const buf = await file.arrayBuffer();
+      const src = await PDFDocument.load(buf, { ignoreEncryption: true });
+      setProgress(40);
+      // Strategy: reload the document through pdf-lib and re-save.
+      // This drops unreferenced objects and normalizes output,
+      // which can reduce size for many PDFs. We also remove metadata.
+      const out = await PDFDocument.create();
+      const pages = await out.copyPages(src, src.getPageIndices());
+      pages.forEach((p) => out.addPage(p));
+      out.setTitle("");
+      out.setAuthor("");
+      out.setSubject("");
+      out.setKeywords([]);
+      out.setProducer("");
+      out.setCreator("");
+      setProgress(70);
+      const bytes = await out.save({
+        useObjectStreams: level === "high",
+        addDefaultPage: false,
+      });
+      setProgress(100);
+      setResult(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to compress PDF.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const saved = file && result
+    ? Math.round(((file.size - result.size) / file.size) * 100)
+    : 0;
+
+  const reset = () => {
+    setFile(null);
+    setResult(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="application/pdf,.pdf"
+            onFiles={(f) => load(f[0])}
+            label="Drop a PDF here"
+          />
+        ) : (
+          <div className="flex items-center gap-3 p-4 bg-[#25211D] border border-[#342821] rounded-lg">
+            <div className="w-10 h-10 rounded-md bg-[#191715] flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[#C96B4B]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm truncate">{file.name}</p>
+              <p className="text-xs text-[#91887D]">{formatBytes(file.size)}</p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+
+        {file && (
+          <div>
+            <label className="block text-sm font-medium mb-2">Compression level</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["low", "medium", "high"] as const).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLevel(l)}
+                  className={
+                    "px-3 py-2 rounded-lg border text-sm transition-colors " +
+                    (level === l
+                      ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                      : "bg-[#25211D] border-[#342821] text-[#E8E1D5] hover:border-[#C96B4B]/40")
+                  }
+                >
+                  <p className="font-medium capitalize">{l}</p>
+                  <p className="text-[10px] text-[#91887D] mt-0.5">
+                    {l === "low" ? "Faster" : l === "medium" ? "Balanced" : "Smallest"}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {working && <ProgressBar progress={progress} label="Compressing" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+
+        {result && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-[#25211D] border border-[#342821] rounded-lg p-3">
+              <p className="text-xs text-[#91887D]">Original</p>
+              <p className="text-sm font-medium mt-1">{file && formatBytes(file.size)}</p>
+            </div>
+            <div className="bg-[#25211D] border border-[#342821] rounded-lg p-3">
+              <p className="text-xs text-[#91887D]">Compressed</p>
+              <p className="text-sm font-medium mt-1">{formatBytes(result.size)}</p>
+            </div>
+            <div className="bg-[#C96B4B]/10 border border-[#C96B4B]/30 rounded-lg p-3">
+              <p className="text-xs text-[#C96B4B]">Saved</p>
+              <p className="text-sm font-medium mt-1 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3" /> {Math.max(0, saved)}%
+              </p>
+            </div>
+          </div>
+        )}
+
+        <DownloadResult blob={result} filename={file ? `compressed-${file.name}` : "compressed.pdf"} />
+
+        {file && !working && (
+          <Button onClick={compress} loading={working}>
+            {working && <Loader2 className="w-4 h-4 animate-spin" />}
+            Compress PDF
+          </Button>
+        )}
+
+        <p className="text-xs text-[#91887D]">
+          Note: browser-based compression works best on PDFs with redundant
+          internal objects. Heavily compressed or image-based PDFs may not shrink
+          significantly without re-encoding images.
+        </p>
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\csv-viewer\index.tsx
+============================================================
+
+import { useMemo, useState } from "react";
+import Papa from "papaparse";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  ErrorDisplay,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Search, Download } from "lucide-react";
+
+const PAGE_SIZE = 50;
+
+export default function CSVViewer() {
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [rows, setRows] = useState<string[][]>([]);
+  const [filename, setFilename] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortCol, setSortCol] = useState<number | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["csv-viewer"];
+
+  const load = (file: File) => {
+    setError(null);
+    setFilename(file.name);
+    Papa.parse(file, {
+      complete: (result) => {
+        const data = result.data as string[][];
+        if (!data.length) {
+          setError("No data found.");
+          return;
+        }
+        const h = data[0];
+        const r = data.slice(1).filter((row) => row.some((c) => c !== ""));
+        setHeaders(h);
+        setRows(r);
+        setPage(0);
+        setSortCol(null);
+      },
+      error: (e) => setError(e.message),
+    });
+  };
+
+  const filtered = useMemo(() => {
+    if (!search) return rows;
+    const s = search.toLowerCase();
+    return rows.filter((r) => r.some((c) => c.toLowerCase().includes(s)));
+  }, [rows, search]);
+
+  const sorted = useMemo(() => {
+    if (sortCol === null) return filtered;
+    return [...filtered].sort((a, b) => {
+      const av = a[sortCol] ?? "";
+      const bv = b[sortCol] ?? "";
+      const an = parseFloat(av);
+      const bn = parseFloat(bv);
+      if (!isNaN(an) && !isNaN(bn)) return sortDir === "asc" ? an - bn : bn - an;
+      return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+  }, [filtered, sortCol, sortDir]);
+
+  const paged = useMemo(() => {
+    return sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  }, [sorted, page]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+
+  const toggleSort = (i: number) => {
+    if (sortCol === i) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortCol(i);
+      setSortDir("asc");
+    }
+  };
+
+  const download = () => {
+    const csv = Papa.unparse([headers, ...sorted]);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "data.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const reset = () => {
+    setHeaders([]);
+    setRows([]);
+    setFilename("");
+    setSearch("");
+    setSortCol(null);
+    setPage(0);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!headers.length ? (
+          <FileDropzone
+            accept=".csv,text/csv"
+            onFiles={(f) => load(f[0])}
+            label="Drop a CSV file here"
+          />
+        ) : (
+          <>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{filename}</p>
+                <p className="text-xs text-[#91887D]">
+                  {sorted.length} row{sorted.length !== 1 ? "s" : ""} â€¢{" "}
+                  {headers.length} column{headers.length !== 1 ? "s" : ""}
+                  {search && ` â€¢ filtered: ${filtered.length}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#91887D]" />
+                  <input
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(0);
+                    }}
+                    placeholder="Searchâ€¦"
+                    className="w-full sm:w-64 pl-9 pr-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none"
+                  />
+                </div>
+                <Button variant="secondary" size="sm" onClick={download}>
+                  <Download className="w-3.5 h-3.5" /> Download
+                </Button>
+                <Button variant="ghost" size="sm" onClick={reset}>
+                  Replace
+                </Button>
+              </div>
+            </div>
+
+            <div className="border border-[#342821] rounded-lg overflow-hidden overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[#25211D] border-b border-[#342821]">
+                  <tr>
+                    {headers.map((h, i) => (
+                      <th
+                        key={i}
+                        onClick={() => toggleSort(i)}
+                        className="px-3 py-2 text-left font-medium text-[#E8E1D5] whitespace-nowrap cursor-pointer hover:text-[#C96B4B]"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>{h || <span className="text-[#91887D]">col {i + 1}</span>}</span>
+                          {sortCol === i && (
+                            <span className="text-[#C96B4B]">
+                              {sortDir === "asc" ? "â†‘" : "â†“"}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.map((row, ri) => (
+                    <tr key={ri} className="border-b border-[#342821]/50 hover:bg-[#25211D]/40">
+                      {headers.map((_, ci) => (
+                        <td
+                          key={ci}
+                          className="px-3 py-2 text-[#E8E1D5] whitespace-nowrap max-w-xs truncate"
+                          title={row[ci]}
+                        >
+                          {row[ci] ?? ""}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  {paged.length === 0 && (
+                    <tr>
+                      <td colSpan={headers.length} className="py-8 text-center text-[#91887D]">
+                        No rows match your search.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-[#91887D]">
+                Page {page + 1} of {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {error && <ErrorDisplay message={error} />}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\image-compressor\index.tsx
+============================================================
+
+import { useState } from "react";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ProgressBar,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { X } from "lucide-react";
+import JSZip from "jszip";
+
+type Result = {
+  original: File;
+  originalSize: number;
+  blob: Blob;
+  url: string;
+};
+
+export default function ImageCompressor() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [quality, setQuality] = useState(0.7);
+  const [maxW, setMaxW] = useState(0);
+  const [maxH, setMaxH] = useState(0);
+  const [format, setFormat] = useState<"jpeg" | "webp" | "png">("jpeg");
+  const [results, setResults] = useState<Result[]>([]);
+  const [zipBlob, setZipBlob] = useState<Blob | null>(null);
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["image-compressor"];
+
+  const onFiles = (incoming: File[]) => {
+    const imgs = incoming.filter((f) => f.type.startsWith("image/"));
+    if (!imgs.length) {
+      setError("Please select image files.");
+      return;
+    }
+    setFiles((prev) => [...prev, ...imgs]);
+    setResults([]);
+    setError(null);
+  };
+
+  const compressFile = (file: File): Promise<Result> =>
+    new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (maxW && width > maxW) {
+        height = Math.round(height * (maxW / width));
+        width = maxW;
+      }
+      if (maxH && height > maxH) {
+        width = Math.round(width * (maxH / height));
+        height = maxH;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingQuality = "high";
+      if (format === "jpeg" || format === "webp") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      const mime = format === "png" ? "image/png" : format === "webp" ? "image/webp" : "image/jpeg";
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error("Compression failed"));
+          resolve({
+              original: file,
+              originalSize: file.size,
+              blob,
+              url: URL.createObjectURL(blob),
+            });
+          },
+          mime,
+          format === "png" ? undefined : quality
+        );
+      };
+      img.onerror = () => reject(new Error(`Failed to load ${file.name}`));
+      img.src = URL.createObjectURL(file);
+    });
+
+  const compress = async () => {
+    if (!files.length) return;
+    setError(null);
+    setResults([]);
+    setZipBlob(null);
+    setWorking(true);
+    try {
+      const out: Result[] = [];
+      for (let i = 0; i < files.length; i++) {
+        out.push(await compressFile(files[i]));
+        setProgress(((i + 1) / files.length) * 100);
+      }
+      setResults(out);
+      if (out.length > 1) {
+        const zip = new JSZip();
+        out.forEach((r) =>
+          zip.file(r.original.name.replace(/\.[^.]+$/, "") + `.${format === "jpeg" ? "jpg" : format}`, r.blob)
+        );
+        const zb = await zip.generateAsync({ type: "blob" });
+        setZipBlob(zb);
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Compression failed.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    results.forEach((r) => URL.revokeObjectURL(r.url));
+    setFiles([]);
+    setResults([]);
+    setZipBlob(null);
+    setError(null);
+  };
+
+  const totalOriginal = results.reduce((a, r) => a + r.originalSize, 0);
+  const totalNew = results.reduce((a, r) => a + r.blob.size, 0);
+  const saved = totalOriginal ? Math.round(((totalOriginal - totalNew) / totalOriginal) * 100) : 0;
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        <FileDropzone
+          multiple
+          accept="image/jpeg,image/png,image/webp"
+          onFiles={onFiles}
+          label="Drop images here"
+          sublabel="JPG, PNG, WebP"
+        />
+
+        {files.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-[#91887D]">{files.length} image{files.length > 1 ? "s" : ""}</p>
+              <button onClick={reset} className="text-xs text-[#91887D] hover:text-[#E8E1D5]">
+                Clear
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {files.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-2.5 bg-[#25211D] border border-[#342821] rounded-lg"
+                >
+                  <div className="w-8 h-8 rounded bg-[#11100F] overflow-hidden flex-shrink-0">
+                    <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{f.name}</p>
+                    <p className="text-xs text-[#91887D]">{formatBytes(f.size)}</p>
+                  </div>
+                  <button
+                    onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="p-1 text-[#91887D] hover:text-[#E8E1D5]"
+                    aria-label="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Format</label>
+            <select
+              value={format}
+              onChange={(e) => setFormat(e.target.value as any)}
+              className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+            >
+              <option value="jpeg">JPG</option>
+              <option value="webp">WebP</option>
+              <option value="png">PNG</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              Quality ({Math.round(quality * 100)}%)
+            </label>
+            <input
+              type="range"
+              min={0.1}
+              max={1}
+              step={0.05}
+              value={quality}
+              disabled={format === "png"}
+              onChange={(e) => setQuality(parseFloat(e.target.value))}
+              className="w-full accent-[#C96B4B]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Max width</label>
+            <input
+              type="number"
+              value={maxW || ""}
+              onChange={(e) => setMaxW(parseInt(e.target.value) || 0)}
+              placeholder="No limit"
+              className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Max height</label>
+            <input
+              type="number"
+              value={maxH || ""}
+              onChange={(e) => setMaxH(parseInt(e.target.value) || 0)}
+              placeholder="No limit"
+              className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none"
+            />
+          </div>
+        </div>
+
+        {working && <ProgressBar progress={progress} label="Compressing" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+
+        {results.length > 0 && (
+          <div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="bg-[#25211D] border border-[#342821] rounded-lg p-3">
+                <p className="text-xs text-[#91887D]">Original</p>
+                <p className="text-sm font-medium mt-1">{formatBytes(totalOriginal)}</p>
+              </div>
+              <div className="bg-[#25211D] border border-[#342821] rounded-lg p-3">
+                <p className="text-xs text-[#91887D]">New</p>
+                <p className="text-sm font-medium mt-1">{formatBytes(totalNew)}</p>
+              </div>
+              <div className="bg-[#C96B4B]/10 border border-[#C96B4B]/30 rounded-lg p-3">
+                <p className="text-xs text-[#C96B4B]">Reduced</p>
+                <p className="text-sm font-medium mt-1">{saved}%</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+              {results.map((r, i) => (
+                <a
+                  key={i}
+                  href={r.url}
+                  download={r.original.name.replace(/\.[^.]+$/, "") + `.${format === "jpeg" ? "jpg" : format}`}
+                  className="bg-[#25211D] border border-[#342821] rounded-lg p-3 hover:border-[#C96B4B]/50"
+                >
+                  <div className="aspect-square bg-[#11100F] rounded overflow-hidden mb-2">
+                    <img src={r.url} alt="" className="w-full h-full object-contain" />
+                  </div>
+                  <p className="text-xs truncate">{r.original.name}</p>
+                  <p className="text-xs text-[#91887D] mt-0.5">
+                    {formatBytes(r.originalSize)} â†’ {formatBytes(r.blob.size)}
+                  </p>
+                </a>
+              ))}
+            </div>
+            {zipBlob && (
+              <a href={URL.createObjectURL(zipBlob)} download="compressed.zip">
+                <Button>Download all as ZIP</Button>
+              </a>
+            )}
+            {results.length === 1 && (
+              <DownloadResult blob={results[0].blob} filename={results[0].original.name} />
+            )}
+          </div>
+        )}
+
+        {files.length > 0 && !working && (
+          <Button onClick={compress}>Compress</Button>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\image-converter\index.tsx
+============================================================
+
+import { useState } from "react";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ProgressBar,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { X } from "lucide-react";
+import JSZip from "jszip";
+
+type Out = { file: File; blob: Blob; url: string; name: string };
+
+export default function ImageConverter() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [format, setFormat] = useState<"jpeg" | "png" | "webp">("webp");
+  const [quality, setQuality] = useState(0.92);
+  const [results, setResults] = useState<Out[]>([]);
+  const [zipBlob, setZipBlob] = useState<Blob | null>(null);
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["image-converter"];
+
+  const onFiles = (incoming: File[]) => {
+    const imgs = incoming.filter((f) => f.type.startsWith("image/"));
+    if (!imgs.length) {
+      setError("Please select image files.");
+      return;
+    }
+    setFiles(imgs);
+    setResults([]);
+    setZipBlob(null);
+    setError(null);
+  };
+
+  const convert = (file: File): Promise<Out> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d")!;
+        if (format !== "png") {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(img, 0, 0);
+        const mime = format === "png" ? "image/png" : format === "webp" ? "image/webp" : "image/jpeg";
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Conversion failed"));
+            const ext = format === "jpeg" ? "jpg" : format;
+            const name = file.name.replace(/\.[^.]+$/, "") + `.${ext}`;
+            resolve({ file, blob, url: URL.createObjectURL(blob), name });
+          },
+          mime,
+          format === "png" ? undefined : quality
+        );
+      };
+      img.onerror = () => reject(new Error(`Failed to load ${file.name}`));
+      img.src = URL.createObjectURL(file);
+    });
+
+  const run = async () => {
+    if (!files.length) return;
+    setError(null);
+    setResults([]);
+    setZipBlob(null);
+    setWorking(true);
+    try {
+      const out: Out[] = [];
+      for (let i = 0; i < files.length; i++) {
+        out.push(await convert(files[i]));
+        setProgress(((i + 1) / files.length) * 100);
+      }
+      setResults(out);
+      if (out.length > 1) {
+        const zip = new JSZip();
+        out.forEach((r) => zip.file(r.name, r.blob));
+        const zb = await zip.generateAsync({ type: "blob" });
+        setZipBlob(zb);
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Conversion failed.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    results.forEach((r) => URL.revokeObjectURL(r.url));
+    setFiles([]);
+    setResults([]);
+    setZipBlob(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        <FileDropzone
+          multiple
+          accept="image/jpeg,image/png,image/webp"
+          onFiles={onFiles}
+          label="Drop images here"
+          sublabel="JPG, PNG, WebP"
+        />
+
+        {files.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-[#91887D]">{files.length} image{files.length > 1 ? "s" : ""}</p>
+              <button onClick={reset} className="text-xs text-[#91887D] hover:text-[#E8E1D5]">
+                Clear
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {files.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-2.5 bg-[#25211D] border border-[#342821] rounded-lg"
+                >
+                  <div className="w-8 h-8 rounded bg-[#11100F] overflow-hidden flex-shrink-0">
+                    <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{f.name}</p>
+                    <p className="text-xs text-[#91887D]">{formatBytes(f.size)}</p>
+                  </div>
+                  <span className="text-xs text-[#C96B4B]">â†’ {format.toUpperCase()}</span>
+                  <button
+                    onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="p-1 text-[#91887D] hover:text-[#E8E1D5]"
+                    aria-label="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Output format</label>
+            <div className="flex gap-2">
+              {(["jpeg", "png", "webp"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFormat(f)}
+                  className={
+                    "flex-1 px-3 py-2 rounded-lg border text-sm uppercase transition-colors " +
+                    (format === f
+                      ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                      : "bg-[#25211D] border-[#342821] hover:border-[#C96B4B]/40")
+                  }
+                >
+                  {f === "jpeg" ? "JPG" : f.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              Quality ({Math.round(quality * 100)}%)
+            </label>
+            <input
+              type="range"
+              min={0.1}
+              max={1}
+              step={0.05}
+              value={quality}
+              disabled={format === "png"}
+              onChange={(e) => setQuality(parseFloat(e.target.value))}
+              className="w-full accent-[#C96B4B]"
+            />
+          </div>
+        </div>
+
+        {working && <ProgressBar progress={progress} label="Converting" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+
+        {results.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {results.map((r, i) => (
+              <a
+                key={i}
+                href={r.url}
+                download={r.name}
+                className="bg-[#25211D] border border-[#342821] rounded-lg p-3 hover:border-[#C96B4B]/50"
+              >
+                <div className="aspect-square bg-[#11100F] rounded overflow-hidden mb-2">
+                  <img src={r.url} alt="" className="w-full h-full object-contain" />
+                </div>
+                <p className="text-xs truncate">{r.name}</p>
+                <p className="text-xs text-[#91887D] mt-0.5">{formatBytes(r.blob.size)}</p>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {zipBlob && (
+          <a href={URL.createObjectURL(zipBlob)} download="converted.zip">
+            <Button>Download all as ZIP</Button>
+          </a>
+        )}
+        {results.length === 1 && (
+          <DownloadResult blob={results[0].blob} filename={results[0].name} />
+        )}
+
+        {files.length > 0 && !working && (
+          <Button onClick={run}>Convert</Button>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\image-cropper\index.tsx
+============================================================
+
+import { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ErrorDisplay,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { RotateCw, ZoomIn, ZoomOut, Loader2 } from "lucide-react";
+
+const ASPECTS: { label: string; value: number | "free" }[] = [
+  { label: "Free", value: "free" },
+  { label: "Square", value: 1 },
+  { label: "16:9", value: 16 / 9 },
+  { label: "4:3", value: 4 / 3 },
+  { label: "3:2", value: 3 / 2 },
+  { label: "9:16", value: 9 / 16 },
+];
+
+export default function ImageCropper() {
+  const [file, setFile] = useState<File | null>(null);
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [aspect, setAspect] = useState<number | "free">("free");
+  const [croppedArea, setCroppedArea] = useState<Area | null>(null);
+  const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
+  const tool = TOOLS_BY_SLUG["image-cropper"];
+
+  const onFile = (f: File) => {
+    setError(null);
+    setResult(null);
+    const url = URL.createObjectURL(f);
+    setFile(f);
+    setImageSrc(url);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+  };
+
+  const onCropComplete = useCallback((_: Area, area: Area) => {
+    setCroppedArea(area);
+  }, []);
+
+  const getCroppedImg = async (): Promise<Blob> => {
+    const img = new Image();
+    img.src = imageSrc;
+    await new Promise((res) => (img.onload = res));
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    canvas.width = croppedArea!.width;
+    canvas.height = croppedArea!.height;
+    ctx.drawImage(
+      img,
+      croppedArea!.x,
+      croppedArea!.y,
+      croppedArea!.width,
+      croppedArea!.height,
+      0,
+      0,
+      croppedArea!.width,
+      croppedArea!.height
+    );
+    return new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b!), "image/png")
+    );
+  };
+
+  const cropAndDownload = async () => {
+    if (!croppedArea) return;
+    setError(null);
+    setWorking(true);
+    try {
+      const blob = await getCroppedImg();
+      if (result) URL.revokeObjectURL(result.url);
+      setResult({ blob, url: URL.createObjectURL(blob) });
+    } catch (e: any) {
+      setError(e?.message ?? "Crop failed.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    if (imageSrc) URL.revokeObjectURL(imageSrc);
+    if (result) URL.revokeObjectURL(result.url);
+    setFile(null);
+    setImageSrc("");
+    setResult(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="image/*"
+            onFiles={(f) => onFile(f[0])}
+            label="Drop an image here"
+          />
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {ASPECTS.map((a) => (
+                <button
+                  key={a.label}
+                  onClick={() => setAspect(a.value)}
+                  className={
+                    "px-3 py-1.5 text-xs rounded-md border transition-colors " +
+                    (aspect === a.value
+                      ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                      : "bg-[#25211D] border-[#342821] hover:border-[#C96B4B]/40")
+                  }
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full aspect-[4/3] bg-[#11100F] border border-[#342821] rounded-lg overflow-hidden">
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                rotation={rotation}
+                aspect={aspect === "free" ? undefined : aspect}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onRotationChange={setRotation}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="flex items-center gap-2">
+                <ZoomOut className="w-4 h-4 text-[#91887D]" />
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={zoom}
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  className="flex-1 accent-[#C96B4B]"
+                />
+                <ZoomIn className="w-4 h-4 text-[#91887D]" />
+              </div>
+              <div className="flex items-center gap-2">
+                <RotateCw className="w-4 h-4 text-[#91887D]" />
+                <input
+                  type="range"
+                  min={0}
+                  max={360}
+                  value={rotation}
+                  onChange={(e) => setRotation(parseInt(e.target.value))}
+                  className="flex-1 accent-[#C96B4B]"
+                />
+                <span className="text-xs text-[#91887D] w-8">{rotation}Â°</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-[#91887D]">
+                  {croppedArea ? `${Math.round(croppedArea.width)} Ã— ${Math.round(croppedArea.height)}` : "â€”"}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        {result && (
+          <DownloadResult blob={result.blob} filename={`cropped-${file?.name ?? "image.png"}`} />
+        )}
+
+        {file && (
+          <div className="flex gap-2">
+            <Button onClick={cropAndDownload} loading={working}>
+              {working && <Loader2 className="w-4 h-4 animate-spin" />}
+              Crop & Download
+            </Button>
+            <Button variant="outline" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\image-resizer\index.tsx
+============================================================
+
+import { useState, useEffect, useRef } from "react";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Link2, Unlink, RotateCw, Loader2 } from "lucide-react";
+
+const PRESETS: { label: string; w: number; h: number }[] = [
+  { label: "1080 Ã— 1080", w: 1080, h: 1080 },
+  { label: "1920 Ã— 1080", w: 1920, h: 1080 },
+  { label: "1080 Ã— 1920", w: 1080, h: 1920 },
+  { label: "1200 Ã— 630", w: 1200, h: 630 },
+  { label: "2560 Ã— 1440", w: 2560, h: 1440 },
+  { label: "1024 Ã— 768", w: 1024, h: 768 },
+];
+
+export default function ImageResizer() {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [original, setOriginal] = useState<{ w: number; h: number } | null>(null);
+  const [w, setW] = useState<number>(0);
+  const [h, setH] = useState<number>(0);
+  const [lock, setLock] = useState(true);
+  const [rotation, setRotation] = useState(0);
+  const [quality, setQuality] = useState(0.92);
+  const [format, setFormat] = useState<"jpeg" | "png" | "webp">("jpeg");
+  const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tool = TOOLS_BY_SLUG["image-resizer"];
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+      if (result) URL.revokeObjectURL(result.url);
+    };
+  }, [preview, result]);
+
+  const onFile = (f: File) => {
+    setError(null);
+    setResult(null);
+    const url = URL.createObjectURL(f);
+    setPreview(url);
+    setFile(f);
+    const img = new Image();
+    img.onload = () => {
+      setOriginal({ w: img.naturalWidth, h: img.naturalHeight });
+      setW(img.naturalWidth);
+      setH(img.naturalHeight);
+    };
+    img.src = url;
+  };
+
+  const setWidth = (v: number) => {
+    setW(v);
+    if (lock && original) setH(Math.round(v * (original.h / original.w)));
+  };
+  const setHeight = (v: number) => {
+    setH(v);
+    if (lock && original) setW(Math.round(v * (original.w / original.h)));
+  };
+
+  const resize = async () => {
+    if (!file || !original || !w || !h) return;
+    setError(null);
+    setWorking(true);
+    try {
+      const img = new Image();
+      img.src = preview!;
+      await new Promise((res) => (img.onload = res));
+      const canvas = canvasRef.current || document.createElement("canvas");
+      const swap = rotation === 90 || rotation === 270;
+      canvas.width = swap ? h : w;
+      canvas.height = swap ? w : h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingQuality = "high";
+      if (format !== "png") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      const mime = format === "png" ? "image/png" : format === "webp" ? "image/webp" : "image/jpeg";
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            setError("Resize failed.");
+            return;
+          }
+          if (result) URL.revokeObjectURL(result.url);
+          setResult({ blob, url: URL.createObjectURL(blob) });
+          setWorking(false);
+        },
+        mime,
+        quality
+      );
+    } catch (e: any) {
+      setError(e?.message ?? "Resize failed.");
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    if (result) URL.revokeObjectURL(result.url);
+    setFile(null);
+    setPreview("");
+    setOriginal(null);
+    setW(0);
+    setH(0);
+    setResult(null);
+    setError(null);
+    setRotation(0);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="image/*"
+            onFiles={(f) => onFile(f[0])}
+            label="Drop an image here"
+          />
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-[#11100F] border border-[#342821] rounded-lg p-3">
+              <p className="text-xs text-[#91887D] mb-2">
+                Original: {original?.w} Ã— {original?.h} â€¢ {file && formatBytes(file.size)}
+              </p>
+              <div className="aspect-video bg-[#191715] rounded flex items-center justify-center overflow-hidden">
+                <img src={preview} alt="" className="max-w-full max-h-full object-contain" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Preset sizes</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESETS.map((p) => (
+                    <button
+                      key={p.label}
+                      onClick={() => {
+                        setW(p.w);
+                        if (lock && original) setH(Math.round(p.w * (original.h / original.w)));
+                        else setH(p.h);
+                      }}
+                      className="px-2 py-1 text-xs bg-[#25211D] border border-[#342821] rounded hover:border-[#C96B4B]/40"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Width</label>
+                  <input
+                    type="number"
+                    value={w}
+                    onChange={(e) => setWidth(parseInt(e.target.value) || 0)}
+                    className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Height</label>
+                  <input
+                    type="number"
+                    value={h}
+                    onChange={(e) => setHeight(parseInt(e.target.value) || 0)}
+                    className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => setLock(!lock)}
+                className="inline-flex items-center gap-2 text-xs text-[#91887D] hover:text-[#E8E1D5]"
+              >
+                {lock ? <Link2 className="w-3.5 h-3.5" /> : <Unlink className="w-3.5 h-3.5" />}
+                {lock ? "Aspect ratio locked" : "Aspect ratio unlocked"}
+              </button>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Rotation ({rotation}Â°)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={360}
+                    value={rotation}
+                    onChange={(e) => setRotation(parseInt(e.target.value))}
+                    className="flex-1 accent-[#C96B4B]"
+                  />
+                  <button
+                    onClick={() => setRotation((rotation + 90) % 360)}
+                    className="p-2 bg-[#25211D] border border-[#342821] rounded-lg"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Format</label>
+                  <select
+                    value={format}
+                    onChange={(e) => setFormat(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                  >
+                    <option value="jpeg">JPG</option>
+                    <option value="png">PNG</option>
+                    <option value="webp">WebP</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Quality ({Math.round(quality * 100)}%)
+                  </label>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={1}
+                    step={0.05}
+                    value={quality}
+                    disabled={format === "png"}
+                    onChange={(e) => setQuality(parseFloat(e.target.value))}
+                    className="w-full accent-[#C96B4B]"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        {result && (
+          <DownloadResult blob={result.blob} filename={`resized-${file?.name}`} />
+        )}
+
+        <canvas ref={canvasRef} className="hidden" />
+
+        {file && (
+          <div className="flex gap-2">
+            <Button onClick={resize} loading={working}>
+              {working && <Loader2 className="w-4 h-4 animate-spin" />}
+              Resize & Download
+            </Button>
+            <Button variant="outline" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\images-to-pdf\index.tsx
+============================================================
+
+import { useState } from "react";
+import { jsPDF } from "jspdf";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ErrorDisplay,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Loader2, RotateCw, X } from "lucide-react";
+
+type Item = { file: File; url: string; rotation: number };
+
+export default function ImagesToPDF() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [pageSize, setPageSize] = useState<"a4" | "letter" | "fit">("a4");
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [margin, setMargin] = useState(10);
+  const [result, setResult] = useState<Blob | null>(null);
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["images-to-pdf"];
+
+  const onFiles = (files: File[]) => {
+    const imgs = files.filter((f) =>
+      ["image/jpeg", "image/png", "image/webp"].includes(f.type) ||
+      /\.(jpe?g|png|webp)$/i.test(f.name)
+    );
+    if (!imgs.length) {
+      setError("Please select JPG, PNG or WebP images.");
+      return;
+    }
+    const items: Item[] = imgs.map((f) => ({
+      file: f,
+      url: URL.createObjectURL(f),
+      rotation: 0,
+    }));
+    setItems((prev) => [...prev, ...items]);
+    setResult(null);
+    setError(null);
+  };
+
+  const rotate = (i: number) => {
+    setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, rotation: (it.rotation + 90) % 360 } : it)));
+  };
+
+  const remove = (i: number) => {
+    setItems((prev) => {
+      const it = prev[i];
+      URL.revokeObjectURL(it.url);
+      return prev.filter((_, idx) => idx !== i);
+    });
+  };
+
+
+
+  const imgToMime = (name: string) =>
+    /\.png$/i.test(name) ? "image/png" : /\.webp$/i.test(name) ? "image/webp" : "image/jpeg";
+
+  const loadImage = (url: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
+
+  const generate = async () => {
+    if (!items.length) return;
+    setError(null);
+    setWorking(true);
+    try {
+      const firstImg = await loadImage(items[0].url);
+      const doc = new jsPDF({
+        orientation,
+        unit: "mm",
+        format: pageSize === "fit" ? [
+          (items[0].file.name.toLowerCase().endsWith(".png") ? firstImg.width : firstImg.width) * 0.264583,
+          (items[0].file.name.toLowerCase().endsWith(".png") ? firstImg.height : firstImg.height) * 0.264583,
+        ] : pageSize,
+      });
+
+      for (let i = 0; i < items.length; i++) {
+        if (i > 0) {
+          if (pageSize === "fit") {
+            const img = await loadImage(items[i].url);
+            doc.addPage([img.width * 0.264583, img.height * 0.264583], orientation);
+          } else {
+            doc.addPage(pageSize, orientation);
+          }
+        }
+        const item = items[i];
+        const img = await loadImage(item.url);
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const availW = pageW - margin * 2;
+        const availH = pageH - margin * 2;
+        let w = img.width * 0.264583;
+        let h = img.height * 0.264583;
+        const ratio = Math.min(availW / w, availH / h);
+        w *= ratio;
+        h *= ratio;
+        const x = (pageW - w) / 2;
+        const y = (pageH - h) / 2;
+        const mime = imgToMime(item.file.name);
+        if (item.rotation !== 0) {
+          // Rotate canvas via jsPDF transformation isn't trivial â€” draw via canvas
+          const canvas = document.createElement("canvas");
+          const swap = item.rotation === 90 || item.rotation === 270;
+          canvas.width = swap ? img.height : img.width;
+          canvas.height = swap ? img.width : img.height;
+          const ctx = canvas.getContext("2d")!;
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate((item.rotation * Math.PI) / 180);
+          ctx.drawImage(img, -img.width / 2, -img.height / 2);
+          const dataUrl = canvas.toDataURL(mime, 0.92);
+          const rw = canvas.width * 0.264583;
+          const rh = canvas.height * 0.264583;
+          const rr = Math.min(availW / rw, availH / rh);
+          const fw = rw * rr;
+          const fh = rh * rr;
+          doc.addImage(dataUrl, "JPEG", (pageW - fw) / 2, (pageH - fh) / 2, fw, fh);
+        } else {
+          doc.addImage(item.url, mime as "JPEG", x, y, w, h);
+        }
+      }
+      const out = doc.output("blob");
+      setResult(out);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to build PDF.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    items.forEach((i) => URL.revokeObjectURL(i.url));
+    setItems([]);
+    setResult(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        <FileDropzone
+          multiple
+          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+          onFiles={onFiles}
+          label="Drop images here"
+          sublabel="JPG, PNG or WebP"
+        />
+
+        {items.length > 0 && (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Page size</label>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                >
+                  <option value="a4">A4</option>
+                  <option value="letter">Letter</option>
+                  <option value="fit">Fit to image</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Orientation</label>
+                <select
+                  value={orientation}
+                  onChange={(e) => setOrientation(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                >
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Margin ({margin}mm)
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={30}
+                  value={margin}
+                  onChange={(e) => setMargin(parseInt(e.target.value))}
+                  className="w-full accent-[#C96B4B]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-[#91887D]">{items.length} image{items.length > 1 ? "s" : ""}</p>
+                <button onClick={reset} className="text-xs text-[#91887D] hover:text-[#E8E1D5]">
+                  Clear all
+                </button>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {items.map((it, i) => (
+                  <div
+                    key={i}
+                    className="relative group bg-[#25211D] border border-[#342821] rounded-lg overflow-hidden"
+                  >
+                    <div className="aspect-[3/4] bg-[#11100F]">
+                      <img
+                        src={it.url}
+                        alt=""
+                        className="w-full h-full object-contain"
+                        style={{ transform: `rotate(${it.rotation}deg)` }}
+                      />
+                    </div>
+                    <div className="absolute top-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded">
+                      {i + 1}
+                    </div>
+                    <div className="absolute top-1 right-1 flex flex-col gap-0.5">
+                      <button
+                        onClick={() => rotate(i)}
+                        className="p-1 bg-black/60 rounded hover:bg-black/80"
+                        aria-label="Rotate"
+                      >
+                        <RotateCw className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => remove(i)}
+                        className="p-1 bg-black/60 rounded hover:bg-black/80"
+                        aria-label="Remove"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="p-1.5 text-[10px] text-[#91887D] truncate" title={it.file.name}>
+                      {it.file.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        <DownloadResult blob={result} filename="images.pdf" label="Download PDF" />
+
+        {items.length > 0 && !working && (
+          <Button onClick={generate}>
+            Generate PDF
+          </Button>
+        )}
+        {working && (
+          <div className="flex items-center gap-2 text-sm text-[#91887D]">
+            <Loader2 className="w-4 h-4 animate-spin" /> Building PDFâ€¦
+          </div>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\json-formatter\index.tsx
+============================================================
+
+import { useState, useEffect } from "react";
+import {
+  ToolLayout,
+  Button,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Copy, Download, Trash2, Minimize2, Sparkles, Check, AlertCircle } from "lucide-react";
+
+export default function JSONFormatter() {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<{ line?: number; col?: number; msg: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const tool = TOOLS_BY_SLUG["json-formatter"];
+
+  useEffect(() => {
+    if (!input.trim()) {
+      setError(null);
+      return;
+    }
+    try {
+      JSON.parse(input);
+      setError(null);
+    } catch (e: any) {
+      const match = e.message.match(/position (\d+)/);
+      let line: number | undefined;
+      let col: number | undefined;
+      if (match) {
+        const pos = parseInt(match[1], 10);
+        const before = input.slice(0, pos);
+        line = before.split("\n").length;
+        col = pos - before.lastIndexOf("\n");
+      }
+      setError({ line, col, msg: e.message });
+    }
+  }, [input]);
+
+  const format = () => {
+    try {
+      const parsed = JSON.parse(input);
+      setInput(JSON.stringify(parsed, null, 2));
+    } catch (e: any) {
+      setError({ msg: e.message });
+    }
+  };
+
+  const minify = () => {
+    try {
+      const parsed = JSON.parse(input);
+      setInput(JSON.stringify(parsed));
+    } catch (e: any) {
+      setError({ msg: e.message });
+    }
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(input);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const download = () => {
+    const blob = new Blob([input], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "formatted.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Simple syntax highlighting
+  const highlight = (str: string) => {
+    try {
+      JSON.parse(str);
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (m) => {
+          let cls = "text-[#E0805C]"; // number
+          if (/^"/.test(m)) {
+            cls = /:$/.test(m) ? "text-[#E8E1D5]" : "text-emerald-400";
+          } else if (/true|false/.test(m)) {
+            cls = "text-[#C96B4B]";
+          } else if (/null/.test(m)) {
+            cls = "text-[#91887D]";
+          }
+          return `<span class="${cls}">${m}</span>`;
+        });
+    } catch {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={format} variant="secondary" size="sm">
+            <Sparkles className="w-3.5 h-3.5" /> Format
+          </Button>
+          <Button onClick={minify} variant="secondary" size="sm">
+            <Minimize2 className="w-3.5 h-3.5" /> Minify
+          </Button>
+          <div className="flex-1" />
+          <Button variant="ghost" size="sm" onClick={copy} disabled={!input}>
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={download} disabled={!input}>
+            <Download className="w-3.5 h-3.5" /> Download
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setInput("")} disabled={!input}>
+            <Trash2 className="w-3.5 h-3.5" /> Clear
+          </Button>
+        </div>
+
+        <div className="relative">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder='Paste JSON here...\n\n{\n  "hello": "world"\n}'
+            spellCheck={false}
+            className="w-full h-96 p-4 bg-[#11100F] border border-[#342821] rounded-lg mono text-sm text-[#E8E1D5] placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none resize-none"
+          />
+          {error && (
+            <div className="absolute bottom-3 right-3 max-w-sm bg-rose-500/10 border border-rose-500/30 rounded-lg p-2 text-xs">
+              <div className="flex items-center gap-1.5 text-rose-300">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                <span className="font-medium">Invalid JSON</span>
+              </div>
+              <p className="text-[#91887D] mt-1">
+                {error.line && error.col && (
+                  <span>Line {error.line}, Column {error.col} â€” </span>
+                )}
+                {error.msg}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {input && !error && (
+          <div>
+            <p className="text-xs text-[#91887D] mb-2 uppercase tracking-wider">Preview</p>
+            <pre
+              className="p-4 bg-[#11100F] border border-[#342821] rounded-lg mono text-sm max-h-80 overflow-auto"
+              dangerouslySetInnerHTML={{ __html: highlight(input) }}
+            />
+          </div>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\merge-pdf\index.tsx
+============================================================
+
+import { useState } from "react";
+import { PDFDocument } from "pdf-lib";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ProgressBar,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { GripVertical } from "lucide-react";
+
+export default function MergePDF() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [result, setResult] = useState<Blob | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["merge-pdf"];
+
+  const onFiles = (incoming: File[]) => {
+    const pdfs = incoming.filter((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
+    if (!pdfs.length) {
+      setError("Please select PDF files only.");
+      return;
+    }
+    setFiles((prev) => [...prev, ...pdfs]);
+    setResult(null);
+    setError(null);
+  };
+
+  const move = (from: number, to: number) => {
+    setFiles((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  const merge = async () => {
+    if (files.length < 2) {
+      setError("Please add at least 2 PDFs to merge.");
+      return;
+    }
+    setError(null);
+    setWorking(true);
+    setProgress(10);
+    try {
+      const out = await PDFDocument.create();
+      for (let i = 0; i < files.length; i++) {
+        const buf = await files[i].arrayBuffer();
+        const src = await PDFDocument.load(buf, { ignoreEncryption: true });
+        const pages = await out.copyPages(src, src.getPageIndices());
+        pages.forEach((p) => out.addPage(p));
+        setProgress(10 + ((i + 1) / files.length) * 80);
+      }
+      const bytes = await out.save();
+      setResult(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+      setProgress(100);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to merge PDFs.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    setFiles([]);
+    setResult(null);
+    setError(null);
+    setProgress(0);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        <FileDropzone
+          onFiles={onFiles}
+          multiple
+          accept="application/pdf,.pdf"
+          label="Drop PDF files here"
+          sublabel="You can add multiple PDFs to merge them in order"
+        />
+
+        {files.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-[#91887D]">
+                {files.length} file{files.length > 1 ? "s" : ""} â€¢{" "}
+                {formatBytes(files.reduce((a, f) => a + f.size, 0))}
+              </p>
+              <button
+                onClick={reset}
+                className="text-xs text-[#91887D] hover:text-[#E8E1D5]"
+              >
+                Clear all
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {files.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 p-2.5 bg-[#25211D] border border-[#342821] rounded-lg group"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      disabled={i === 0}
+                      onClick={() => move(i, i - 1)}
+                      className="p-0.5 text-[#91887D] hover:text-[#E8E1D5] disabled:opacity-30"
+                      aria-label="Move up"
+                    >
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <span className="text-xs text-[#91887D] w-5">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{f.name}</p>
+                    <p className="text-xs text-[#91887D]">{formatBytes(f.size)}</p>
+                  </div>
+                  <button
+                    onClick={() => setFiles((p) => p.filter((_, idx) => idx !== i))}
+                    className="text-xs text-[#91887D] hover:text-[#E8E1D5]"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {working && <ProgressBar progress={progress} label="Merging PDFs" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        <DownloadResult blob={result} filename="merged.pdf" label="Download merged PDF" />
+
+        {files.length >= 2 && !working && (
+          <div className="flex gap-2">
+            <Button onClick={merge}>Merge PDFs</Button>
+            <Button variant="outline" onClick={reset}>
+              Reset
+            </Button>
+          </div>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\ocr\index.tsx
+============================================================
+
+import { useState } from "react";
+import Tesseract from "tesseract.js";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  ProgressBar,
+  ErrorDisplay,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Loader2, Copy, Download, Check, FileText } from "lucide-react";
+
+export default function OCR() {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [text, setText] = useState<string>("");
+  const [lang, setLang] = useState<string>("eng");
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const tool = TOOLS_BY_SLUG["ocr"];
+
+  const onFile = (f: File) => {
+    setError(null);
+    setText("");
+    setPreview(URL.createObjectURL(f));
+    setFile(f);
+  };
+
+  const run = async () => {
+    if (!file) return;
+    setError(null);
+    setWorking(true);
+    setProgress(0);
+    try {
+      const result = await Tesseract.recognize(file, lang, {
+        logger: (m) => {
+          if (m.status) setStatus(m.status);
+          if (typeof m.progress === "number") setProgress(m.progress * 100);
+        },
+      });
+      setText(result.data.text);
+      setProgress(100);
+    } catch (e: any) {
+      setError(e?.message ?? "OCR failed.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    setFile(null);
+    setPreview("");
+    setText("");
+    setError(null);
+    setProgress(0);
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const download = () => {
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "extracted.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="image/*"
+            onFiles={(f) => onFile(f[0])}
+            label="Drop an image here"
+            sublabel="Contains text you want to extract"
+          />
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-xs text-[#91887D] uppercase tracking-wider">Image</p>
+              <div className="aspect-[4/3] bg-[#11100F] border border-[#342821] rounded-lg overflow-hidden flex items-center justify-center">
+                <img src={preview} alt="" className="max-w-full max-h-full object-contain" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Language</label>
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                >
+                  <option value="eng">English</option>
+                  <option value="spa">Spanish</option>
+                  <option value="fra">French</option>
+                  <option value="deu">German</option>
+                  <option value="ita">Italian</option>
+                  <option value="por">Portuguese</option>
+                  <option value="chi_sim">Chinese (Simplified)</option>
+                  <option value="jpn">Japanese</option>
+                  <option value="kor">Korean</option>
+                </select>
+              </div>
+              {!working && !text && (
+                <Button onClick={run}>
+                  <FileText className="w-4 h-4" />
+                  Extract text
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {working && (
+          <div className="space-y-2">
+            <ProgressBar progress={progress} label={status || "Processing"} />
+            <p className="text-xs text-[#91887D]">
+              Loading OCR models the first time may take a momentâ€¦
+            </p>
+          </div>
+        )}
+
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+
+        {text && (
+          <div className="bg-[#11100F] border border-[#342821] rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[#342821] bg-[#191715]">
+              <span className="text-xs font-medium text-[#91887D]">Extracted text</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={copy}
+                  className="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded hover:bg-[#25211D] text-[#E8E1D5]"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+                <button
+                  onClick={download}
+                  className="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded hover:bg-[#25211D] text-[#E8E1D5]"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download TXT
+                </button>
+              </div>
+            </div>
+            <pre className="p-4 text-sm text-[#E8E1D5] whitespace-pre-wrap mono max-h-80 overflow-y-auto">
+              {text || <span className="text-[#91887D]">No text detected.</span>}
+            </pre>
+          </div>
+        )}
+
+        {file && !working && (
+          <div className="flex gap-2">
+            <Button onClick={run} loading={working}>
+              {working && <Loader2 className="w-4 h-4 animate-spin" />}
+              {text ? "Re-extract" : "Extract text"}
+            </Button>
+            <Button variant="outline" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+
+        <p className="text-xs text-[#91887D]">
+          Powered by Tesseract.js. OCR runs entirely in your browser.
+        </p>
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\password-generator\index.tsx
+============================================================
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  ToolLayout,
+  Button,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Copy, RefreshCw, ShieldCheck, Check as CheckIcon } from "lucide-react";
+
+export default function PasswordGenerator() {
+  const [length, setLength] = useState(20);
+  const [upper, setUpper] = useState(true);
+  const [lower, setLower] = useState(true);
+  const [numbers, setNumbers] = useState(true);
+  const [symbols, setSymbols] = useState(true);
+  const [excludeAmbiguous, setExcludeAmbiguous] = useState(false);
+  const [count, setCount] = useState(1);
+  const [passwords, setPasswords] = useState<string[]>([]);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const tool = TOOLS_BY_SLUG["password-generator"];
+
+  const generate = () => {
+    let pool = "";
+    if (upper) pool += "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    if (lower) pool += "abcdefghjkmnpqrstuvwxyz";
+    if (numbers) pool += "23456789";
+    if (symbols) pool += "!@#$%^&*()-_=+[]{};:,.<>/?";
+    if (!excludeAmbiguous) {
+      if (upper && !pool.includes("I")) pool += "I";
+      if (upper && !pool.includes("O")) pool += "O";
+      if (lower && !pool.includes("l")) pool += "l";
+      if (numbers && !pool.includes("0")) pool += "0";
+      if (numbers && !pool.includes("1")) pool += "1";
+    }
+    if (!pool) {
+      setPasswords(["Select at least one character set."]);
+      return;
+    }
+    const out: string[] = [];
+    for (let n = 0; n < count; n++) {
+      let pw = "";
+      const arr = new Uint32Array(length);
+      crypto.getRandomValues(arr);
+      for (let i = 0; i < length; i++) {
+        pw += pool[arr[i] % pool.length];
+      }
+      out.push(pw);
+    }
+    setPasswords(out);
+  };
+
+  useEffect(() => {
+    generate();
+  }, []);
+
+  const strength = useMemo(() => {
+    if (!passwords.length || passwords[0].startsWith("Select")) return { label: "â€”", pct: 0, color: "#91887D" };
+    const pool = passwords[0];
+    let size = 0;
+    if (/[a-z]/.test(pool)) size += 26;
+    if (/[A-Z]/.test(pool)) size += 26;
+    if (/[0-9]/.test(pool)) size += 10;
+    if (/[^a-zA-Z0-9]/.test(pool)) size += 32;
+    const entropy = pool.length * Math.log2(size);
+    let label = "Weak";
+    let color = "#ef4444";
+    let pct = 25;
+    if (entropy >= 120) {
+      label = "Very strong";
+      color = "#10b981";
+      pct = 100;
+    } else if (entropy >= 80) {
+      label = "Strong";
+      color = "#34d399";
+      pct = 75;
+    } else if (entropy >= 50) {
+      label = "Good";
+      color = "#f59e0b";
+      pct = 50;
+    } else if (entropy >= 30) {
+      label = "Fair";
+      color = "#fb923c";
+      pct = 35;
+    }
+    return { label, pct, color };
+  }, [passwords]);
+
+  const copy = async (i: number) => {
+    await navigator.clipboard.writeText(passwords[i]);
+    setCopiedIdx(i);
+    setTimeout(() => setCopiedIdx(null), 1500);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-6">
+        {/* Result */}
+        <div className="bg-[#11100F] border border-[#342821] rounded-lg p-4">
+          <div className="space-y-2">
+            {passwords.map((pw, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 bg-[#191715] border border-[#342821] rounded-lg px-3 py-2.5"
+              >
+                <code className="flex-1 mono text-sm md:text-base text-[#E8E1D5] break-all">
+                  {pw}
+                </code>
+                <button
+                  onClick={() => copy(i)}
+                  className="p-1.5 rounded-md hover:bg-[#25211D] text-[#91887D] hover:text-[#E8E1D5] flex-shrink-0"
+                  aria-label="Copy"
+                >
+                  {copiedIdx === i ? (
+                    <CheckIcon className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-[#91887D] flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" /> Strength
+              </span>
+              <span style={{ color: strength.color }} className="font-medium">
+                {strength.label}
+              </span>
+            </div>
+            <div className="h-1.5 bg-[#25211D] rounded-full overflow-hidden">
+              <div
+                className="h-full transition-all"
+                style={{ width: `${strength.pct}%`, backgroundColor: strength.color }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              Length: {length}
+            </label>
+            <input
+              type="range"
+              min={4}
+              max={64}
+              value={length}
+              onChange={(e) => setLength(parseInt(e.target.value))}
+              className="w-full accent-[#C96B4B]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              Count: {count}
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              value={count}
+              onChange={(e) => setCount(parseInt(e.target.value))}
+              className="w-full accent-[#C96B4B]"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Character sets</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <CheckRow label="Uppercase (A-Z)" value={upper} onChange={setUpper} />
+            <CheckRow label="Lowercase (a-z)" value={lower} onChange={setLower} />
+            <CheckRow label="Numbers (0-9)" value={numbers} onChange={setNumbers} />
+            <CheckRow label="Symbols (!@#...)" value={symbols} onChange={setSymbols} />
+            <CheckRow label="Exclude ambiguous" value={excludeAmbiguous} onChange={setExcludeAmbiguous} />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={generate}>
+            <RefreshCw className="w-4 h-4" /> Generate
+          </Button>
+        </div>
+
+        <p className="text-xs text-[#91887D]">
+          Generated using your browser's cryptographically secure random number
+          generator. Passwords never leave your device.
+        </p>
+      </div>
+    </ToolLayout>
+  );
+}
+
+function CheckRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 px-3 py-2 bg-[#25211D] border border-[#342821] rounded-lg cursor-pointer hover:border-[#C96B4B]/40 text-sm">
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+        className="accent-[#C96B4B]"
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+
+============================================================
+FILE: src\tools\pdf-to-images\index.tsx
+============================================================
+
+import { useState } from "react";
+import * as pdfjs from "pdfjs-dist";
+// @ts-ignore
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+import JSZip from "jszip";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  ProgressBar,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { FileText, Loader2, Download } from "lucide-react";
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+type Img = { url: string; name: string; blob: Blob };
+
+export default function PDFToImages() {
+  const [file, setFile] = useState<File | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [format, setFormat] = useState<"png" | "jpeg" | "webp">("png");
+  const [quality, setQuality] = useState(0.9);
+  const [scale, setScale] = useState(1.5);
+  const [range, setRange] = useState("");
+  const [images, setImages] = useState<Img[]>([]);
+  const [zipBlob, setZipBlob] = useState<Blob | null>(null);
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["pdf-to-images"];
+
+  const load = async (f: File) => {
+    setError(null);
+    setImages([]);
+    setZipBlob(null);
+    try {
+      const buf = await f.arrayBuffer();
+      const doc = await pdfjs.getDocument({ data: buf }).promise;
+      setFile(f);
+      setPageCount(doc.numPages);
+    } catch (e: any) {
+      setError("Could not read this PDF.");
+    }
+  };
+
+  const parseRange = (s: string, total: number): number[] => {
+    if (!s.trim()) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set<number>();
+    const parts = s.split(",").map((x) => x.trim()).filter(Boolean);
+    for (const part of parts) {
+      if (part.includes("-")) {
+        const [a, b] = part.split("-").map((x) => parseInt(x.trim(), 10));
+        if (!Number.isFinite(a) || !Number.isFinite(b)) throw new Error(`Invalid range: ${part}`);
+        const lo = Math.max(1, Math.min(a, b));
+        const hi = Math.min(total, Math.max(a, b));
+        for (let i = lo; i <= hi; i++) pages.add(i);
+      } else {
+        const n = parseInt(part, 10);
+        if (!Number.isFinite(n) || n < 1 || n > total) throw new Error(`Invalid page: ${part}`);
+        pages.add(n);
+      }
+    }
+    return Array.from(pages).sort((a, b) => a - b);
+  };
+
+  const convert = async () => {
+    if (!file) return;
+    setError(null);
+    setImages([]);
+    setZipBlob(null);
+    setWorking(true);
+    setProgress(5);
+    try {
+      const buf = await file.arrayBuffer();
+      const doc = await pdfjs.getDocument({ data: buf }).promise;
+      const selected = parseRange(range, doc.numPages);
+      const out: Img[] = [];
+      const mime = format === "jpeg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+      for (let i = 0; i < selected.length; i++) {
+        const page = await doc.getPage(selected[i]);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d")!;
+        if (format !== "png") {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        await page.render({ canvas, viewport } as any).promise;
+        const blob: Blob = await new Promise((resolve) =>
+          canvas.toBlob((b) => resolve(b!), mime, quality)
+        );
+        const url = URL.createObjectURL(blob);
+        out.push({ url, name: `page-${selected[i]}.${format}`, blob });
+        setProgress(5 + ((i + 1) / selected.length) * 85);
+      }
+      setImages(out);
+      const zip = new JSZip();
+      out.forEach((img) => zip.file(img.name, img.blob));
+      const zb = await zip.generateAsync({ type: "blob" });
+      setZipBlob(zb);
+      setProgress(100);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to convert PDF.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    images.forEach((i) => URL.revokeObjectURL(i.url));
+    setFile(null);
+    setImages([]);
+    setZipBlob(null);
+    setPageCount(0);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="application/pdf,.pdf"
+            onFiles={(f) => load(f[0])}
+            label="Drop a PDF here"
+          />
+        ) : (
+          <div className="flex items-center gap-3 p-4 bg-[#25211D] border border-[#342821] rounded-lg">
+            <div className="w-10 h-10 rounded-md bg-[#191715] flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[#C96B4B]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm truncate">{file.name}</p>
+              <p className="text-xs text-[#91887D]">
+                {formatBytes(file.size)} â€¢ {pageCount} page{pageCount !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+
+        {file && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Format</label>
+                <div className="flex gap-2">
+                  {(["png", "jpeg", "webp"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFormat(f)}
+                      className={
+                        "flex-1 px-3 py-2 rounded-lg border text-sm uppercase transition-colors " +
+                        (format === f
+                          ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                          : "bg-[#25211D] border-[#342821] hover:border-[#C96B4B]/40")
+                      }
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Quality {format !== "png" && `(${Math.round(quality * 100)}%)`}
+                </label>
+                <input
+                  type="range"
+                  min={0.3}
+                  max={1}
+                  step={0.05}
+                  value={quality}
+                  disabled={format === "png"}
+                  onChange={(e) => setQuality(parseFloat(e.target.value))}
+                  className="w-full accent-[#C96B4B]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                Scale ({scale}x)
+              </label>
+              <input
+                type="range"
+                min={0.5}
+                max={3}
+                step={0.25}
+                value={scale}
+                onChange={(e) => setScale(parseFloat(e.target.value))}
+                className="w-full accent-[#C96B4B]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Page range</label>
+              <input
+                type="text"
+                value={range}
+                onChange={(e) => setRange(e.target.value)}
+                placeholder={`1-${pageCount} (empty = all)`}
+                className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none"
+              />
+            </div>
+          </>
+        )}
+
+        {working && <ProgressBar progress={progress} label="Rendering pages" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+
+        {images.length > 0 && (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {images.map((img) => (
+                <a
+                  key={img.name}
+                  href={img.url}
+                  download={img.name}
+                  className="group block bg-[#25211D] border border-[#342821] rounded-lg overflow-hidden hover:border-[#C96B4B]/50 transition-colors"
+                >
+                  <div className="aspect-[3/4] bg-[#11100F] flex items-center justify-center">
+                    <img src={img.url} alt={img.name} className="max-h-full max-w-full" />
+                  </div>
+                  <div className="p-2 flex items-center justify-between">
+                    <p className="text-xs truncate">{img.name}</p>
+                    <Download className="w-3.5 h-3.5 text-[#91887D] group-hover:text-[#C96B4B]" />
+                  </div>
+                </a>
+              ))}
+            </div>
+            {zipBlob && (
+              <a href={URL.createObjectURL(zipBlob)} download="images.zip">
+                <Button>Download all as ZIP</Button>
+              </a>
+            )}
+          </>
+        )}
+
+        {file && !working && images.length === 0 && (
+          <Button onClick={convert} loading={working}>
+            {working && <Loader2 className="w-4 h-4 animate-spin" />}
+            Convert to images
+          </Button>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\qr-generator\index.tsx
+============================================================
+
+import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
+import {
+  ToolLayout,
+  Button,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Download } from "lucide-react";
+
+type Mode = "url" | "text" | "email" | "phone" | "wifi" | "vcard";
+
+export default function QRGenerator() {
+  const [mode, setMode] = useState<Mode>("url");
+  const [size, setSize] = useState(320);
+  const [margin, setMargin] = useState(4);
+  const [fg, setFg] = useState("#C96B4B");
+  const [bg, setBg] = useState("#11100F");
+  const [ec, setEc] = useState<"L" | "M" | "Q" | "H">("M");
+
+  const [url, setUrl] = useState("https://xevio.app");
+  const [text, setText] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [ssid, setSsid] = useState("");
+  const [wifiPass, setWifiPass] = useState("");
+  const [wifiEnc, setWifiEnc] = useState<"WPA" | "WEP" | "nopass">("WPA");
+  const [vName, setVName] = useState("");
+  const [vPhone, setVPhone] = useState("");
+  const [vEmail, setVEmail] = useState("");
+  const [vOrg, setVOrg] = useState("");
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const payload = (() => {
+    switch (mode) {
+      case "url":
+        return url || " ";
+      case "text":
+        return text || " ";
+      case "email":
+        return email ? `mailto:${email}` : " ";
+      case "phone":
+        return phone ? `tel:${phone}` : " ";
+      case "wifi":
+        return ssid
+          ? `WIFI:T:${wifiEnc};S:${ssid};P:${wifiPass};;`
+          : " ";
+      case "vcard":
+        return vName
+          ? `BEGIN:VCARD\nVERSION:3.0\nFN:${vName}\nORG:${vOrg}\nTEL:${vPhone}\nEMAIL:${vEmail}\nEND:VCARD`
+          : " ";
+    }
+  })();
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    QRCode.toCanvas(canvasRef.current, payload, {
+      width: size,
+      margin,
+      color: { dark: fg, light: bg },
+      errorCorrectionLevel: ec,
+    }).catch(() => {});
+  }, [payload, size, margin, fg, bg, ec]);
+
+  const download = (as: "png" | "svg") => {
+    if (!canvasRef.current) return;
+    if (as === "png") {
+      canvasRef.current.toBlob((blob) => {
+        if (!blob) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "qr.png";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    } else {
+      QRCode.toString(payload, {
+        type: "svg",
+        width: size,
+        margin,
+        color: { dark: fg, light: bg },
+        errorCorrectionLevel: ec,
+      }).then((svg) => {
+        const blob = new Blob([svg], { type: "image/svg+xml" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "qr.svg";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    }
+  };
+
+  const tool = TOOLS_BY_SLUG["qr-generator"];
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="grid md:grid-cols-[1fr_360px] gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Content type</label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+              {(["url", "text", "email", "phone", "wifi", "vcard"] as Mode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={
+                    "px-2 py-1.5 text-xs rounded-md border uppercase transition-colors " +
+                    (mode === m
+                      ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                      : "bg-[#25211D] border-[#342821] hover:border-[#C96B4B]/40")
+                  }
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {mode === "url" && (
+            <Input label="URL" value={url} onChange={setUrl} placeholder="https://example.com" />
+          )}
+          {mode === "text" && (
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Text</label>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Enter text to encode"
+                rows={4}
+                className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none resize-none"
+              />
+            </div>
+          )}
+          {mode === "email" && (
+            <Input label="Email" value={email} onChange={setEmail} placeholder="name@example.com" />
+          )}
+          {mode === "phone" && (
+            <Input label="Phone" value={phone} onChange={setPhone} placeholder="+1 555 000 0000" />
+          )}
+          {mode === "wifi" && (
+            <div className="space-y-3">
+              <Input label="Network name (SSID)" value={ssid} onChange={setSsid} />
+              <Input label="Password" value={wifiPass} onChange={setWifiPass} />
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Encryption</label>
+                <select
+                  value={wifiEnc}
+                  onChange={(e) => setWifiEnc(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                >
+                  <option value="WPA">WPA/WPA2</option>
+                  <option value="WEP">WEP</option>
+                  <option value="nopass">None</option>
+                </select>
+              </div>
+            </div>
+          )}
+          {mode === "vcard" && (
+            <div className="space-y-3">
+              <Input label="Name" value={vName} onChange={setVName} />
+              <Input label="Organization" value={vOrg} onChange={setVOrg} />
+              <Input label="Phone" value={vPhone} onChange={setVPhone} />
+              <Input label="Email" value={vEmail} onChange={setVEmail} />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              Size ({size}px)
+            </label>
+            <input
+              type="range"
+              min={128}
+              max={1024}
+              step={16}
+              value={size}
+              onChange={(e) => setSize(parseInt(e.target.value))}
+              className="w-full accent-[#C96B4B]"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Margin</label>
+              <input
+                type="number"
+                value={margin}
+                min={0}
+                max={10}
+                onChange={(e) => setMargin(parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Foreground</label>
+              <input
+                type="color"
+                value={fg}
+                onChange={(e) => setFg(e.target.value)}
+                className="w-full h-10 rounded-lg border border-[#342821] bg-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Background</label>
+              <input
+                type="color"
+                value={bg}
+                onChange={(e) => setBg(e.target.value)}
+                className="w-full h-10 rounded-lg border border-[#342821] bg-transparent"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Error correction</label>
+            <div className="flex gap-2">
+              {(["L", "M", "Q", "H"] as const).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setEc(l)}
+                  className={
+                    "flex-1 px-3 py-2 rounded-lg border text-sm uppercase transition-colors " +
+                    (ec === l
+                      ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                      : "bg-[#25211D] border-[#342821] hover:border-[#C96B4B]/40")
+                  }
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div
+            className="aspect-square rounded-xl p-4 flex items-center justify-center"
+            style={{ backgroundColor: bg, border: `1px solid #342821` }}
+          >
+            <canvas ref={canvasRef} className="max-w-full max-h-full" />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => download("png")} className="flex-1">
+              <Download className="w-4 h-4" /> PNG
+            </Button>
+            <Button variant="outline" onClick={() => download("svg")} className="flex-1">
+              <Download className="w-4 h-4" /> SVG
+            </Button>
+          </div>
+        </div>
+      </div>
+    </ToolLayout>
+  );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1.5">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none"
+      />
+    </div>
+  );
+}
+
+
+============================================================
+FILE: src\tools\remove-background\index.tsx
+============================================================
+
+import { useState, useRef, useEffect } from "react";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ProgressBar,
+  ErrorDisplay,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Loader2, Eraser } from "lucide-react";
+
+export default function RemoveBackground() {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [tolerance, setTolerance] = useState(30);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tool = TOOLS_BY_SLUG["remove-background"];
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+      if (result) URL.revokeObjectURL(result.url);
+    };
+  }, [preview, result]);
+
+  const onFile = (f: File) => {
+    setError(null);
+    setResult(null);
+    setPreview(URL.createObjectURL(f));
+    setFile(f);
+  };
+
+  // Remove background by flood-filling from the 4 corners.
+  // This is a simple but effective technique for clean backgrounds.
+  const removeBackground = async () => {
+    if (!file) return;
+    setError(null);
+    setWorking(true);
+    setProgress(5);
+    try {
+      const img = new Image();
+      img.src = preview;
+      await new Promise((res) => (img.onload = res));
+
+      const canvas = canvasRef.current!;
+      const maxDim = 1600;
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+      if (Math.max(w, h) > maxDim) {
+        const r = maxDim / Math.max(w, h);
+        w = Math.round(w * r);
+        h = Math.round(h * r);
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+
+      setProgress(20);
+      await new Promise((r) => setTimeout(r, 10));
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      const visited = new Uint8Array(w * h);
+
+      const getPixel = (x: number, y: number) => {
+        const i = (y * w + x) * 4;
+        return [data[i], data[i + 1], data[i + 2]];
+      };
+      const colorDist = (a: number[], b: number[]) => {
+        const dr = a[0] - b[0];
+        const dg = a[1] - b[1];
+        const db = a[2] - b[2];
+        return Math.sqrt(dr * dr + dg * dg + db * db);
+      };
+
+      const seeds: Array<[number, number]> = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+      const tol = tolerance;
+
+      for (const [sx, sy] of seeds) {
+        const startColor = getPixel(sx, sy);
+        const stack: Array<[number, number]> = [[sx, sy]];
+        let processed = 0;
+        while (stack.length) {
+          const [x, y] = stack.pop()!;
+          const idx = y * w + x;
+          if (visited[idx]) continue;
+          visited[idx] = 1;
+          const p = getPixel(x, y);
+          if (colorDist(p, startColor) <= tol) {
+            data[idx * 4 + 3] = 0;
+            if (x > 0 && !visited[idx - 1]) stack.push([x - 1, y]);
+            if (x < w - 1 && !visited[idx + 1]) stack.push([x + 1, y]);
+            if (y > 0 && !visited[idx - w]) stack.push([x, y - 1]);
+            if (y < h - 1 && !visited[idx + w]) stack.push([x, y + 1]);
+          }
+          processed++;
+          if (processed % 5000 === 0) {
+            setProgress(20 + (Math.min(processed / (w * h), 1) * 60));
+            await new Promise((r) => setTimeout(r, 0));
+          }
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      setProgress(95);
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setError("Failed to process image.");
+          setWorking(false);
+          return;
+        }
+        if (result) URL.revokeObjectURL(result.url);
+        setResult({ blob, url: URL.createObjectURL(blob) });
+        setProgress(100);
+        setWorking(false);
+      }, "image/png");
+    } catch (e: any) {
+      setError(e?.message ?? "Background removal failed.");
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    if (result) URL.revokeObjectURL(result.url);
+    setFile(null);
+    setPreview("");
+    setResult(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="image/*"
+            onFiles={(f) => onFile(f[0])}
+            label="Drop an image here"
+            sublabel="Best for photos with a uniform background"
+          />
+        ) : (
+          <>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-xs text-[#91887D] uppercase tracking-wider">Original</p>
+                <div className="aspect-square bg-[#11100F] border border-[#342821] rounded-lg overflow-hidden flex items-center justify-center">
+                  <img src={preview} alt="" className="max-w-full max-h-full object-contain" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-[#91887D] uppercase tracking-wider">Result</p>
+                <div
+                  className="aspect-square border border-[#342821] rounded-lg overflow-hidden flex items-center justify-center"
+                  style={{
+                    background: result
+                      ? "repeating-conic-gradient(#342821 0% 25%, #11100F 0% 50%) 50% / 24px 24px"
+                      : "#11100F",
+                  }}
+                >
+                  {result ? (
+                    <img src={result.url} alt="" className="max-w-full max-h-full object-contain" />
+                  ) : (
+                    <div className="text-sm text-[#91887D]">Click "Remove background"</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                Tolerance ({tolerance})
+              </label>
+              <input
+                type="range"
+                min={5}
+                max={120}
+                value={tolerance}
+                onChange={(e) => setTolerance(parseInt(e.target.value))}
+                className="w-full accent-[#C96B4B]"
+              />
+              <p className="text-xs text-[#91887D] mt-1">
+                Higher values remove more of the background color.
+              </p>
+            </div>
+          </>
+        )}
+
+        {working && <ProgressBar progress={progress} label="Removing background" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        {result && (
+          <DownloadResult blob={result.blob} filename="no-background.png" />
+        )}
+
+        <canvas ref={canvasRef} className="hidden" />
+
+        {file && !working && (
+          <div className="flex gap-2">
+            <Button onClick={removeBackground} loading={working}>
+              {working && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Eraser className="w-4 h-4" />
+              Remove background
+            </Button>
+            <Button variant="outline" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+
+        <p className="text-xs text-[#91887D]">
+          This tool runs entirely in your browser using flood-fill edge detection.
+          For best results, use images with a uniform background.
+        </p>
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\tools\screenshot-mockup\index.tsx
+============================================================
+
+import { useState, useRef, useEffect } from "react";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  ErrorDisplay,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { Monitor, Smartphone, Tablet, Laptop, Globe } from "lucide-react";
+
+type Device = "desktop" | "laptop" | "tablet" | "phone" | "browser";
+
+export default function ScreenshotMockup() {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [device, setDevice] = useState<Device>("desktop");
+  const [bg, setBg] = useState("#11100F");
+  const [padding, setPadding] = useState(48);
+  const [radius, setRadius] = useState(12);
+  const [shadow, setShadow] = useState(true);
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [format, setFormat] = useState<"png" | "webp">("png");
+  const [result, setResult] = useState<{ blob: Blob; url: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tool = TOOLS_BY_SLUG["screenshot-mockup"];
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+      if (result) URL.revokeObjectURL(result.url);
+    };
+  }, [preview, result]);
+
+  const onFile = (f: File) => {
+    setError(null);
+    setResult(null);
+    setPreview(URL.createObjectURL(f));
+    setFile(f);
+  };
+
+  const getFrame = (device: Device) => {
+    const frames: Record<Device, { w: number; h: number; barH: number; rounded: number; bezel: number }> = {
+      desktop: { w: 1280, h: 800, barH: 32, rounded: 14, bezel: 16 },
+      laptop: { w: 1280, h: 800, barH: 28, rounded: 12, bezel: 14 },
+      tablet: { w: 800, h: 1100, barH: 28, rounded: 28, bezel: 22 },
+      phone: { w: 380, h: 780, barH: 30, rounded: 40, bezel: 16 },
+      browser: { w: 1200, h: 780, barH: 32, rounded: 8, bezel: 0 },
+    };
+    return frames[device];
+  };
+
+  const render = async () => {
+    if (!file) return;
+    setError(null);
+    try {
+      const canvas = canvasRef.current!;
+      const ctx = canvas.getContext("2d")!;
+      const img = new Image();
+      img.src = preview;
+      await new Promise((res) => (img.onload = res));
+
+      const frame = getFrame(device);
+      const contentW = frame.w - frame.bezel * 2;
+      const contentH = frame.h - frame.bezel * 2 - frame.barH;
+      const imgRatio = img.naturalWidth / img.naturalHeight;
+      const contentRatio = contentW / contentH;
+      let drawW: number, drawH: number;
+      if (imgRatio > contentRatio) {
+        drawW = contentW;
+        drawH = contentW / imgRatio;
+      } else {
+        drawH = contentH;
+        drawW = contentH * imgRatio;
+      }
+
+      const totalW = frame.w + padding * 2;
+      const totalH = frame.h + padding * 2;
+      canvas.width = totalW;
+      canvas.height = totalH;
+
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, totalW, totalH);
+
+      ctx.save();
+      ctx.translate(totalW / 2, totalH / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(scale, scale);
+
+      const fx = -frame.w / 2;
+      const fy = -frame.h / 2;
+
+      if (shadow) {
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetY = 20;
+      }
+
+      // Outer frame
+      if (device === "browser") {
+        ctx.fillStyle = "#1a1a1a";
+        roundRect(ctx, fx, fy, frame.w, frame.h, frame.rounded);
+        ctx.fill();
+        // Browser bar
+        ctx.fillStyle = "#2a2a2a";
+        roundRect(ctx, fx, fy, frame.w, frame.barH, frame.rounded, true);
+        ctx.fill();
+      } else if (device === "desktop" || device === "laptop") {
+        ctx.fillStyle = "#1a1a1a";
+        roundRect(ctx, fx, fy, frame.w, frame.h, frame.rounded);
+        ctx.fill();
+        // Screen bezel
+        ctx.fillStyle = "#000";
+        roundRect(ctx, fx + frame.bezel, fy + frame.bezel, frame.w - frame.bezel * 2, frame.h - frame.bezel * 2, 4);
+        ctx.fill();
+        // Address bar
+        ctx.fillStyle = "#25211D";
+        roundRect(ctx, fx + frame.bezel, fy + frame.bezel, frame.w - frame.bezel * 2, frame.barH, 0);
+        ctx.fill();
+        // Stand
+        if (device === "desktop") {
+          ctx.fillStyle = "#1a1a1a";
+          ctx.fillRect(fx + frame.w / 2 - 40, fy + frame.h + 4, 80, 8);
+          ctx.fillRect(fx + frame.w / 2 - 60, fy + frame.h + 12, 120, 6);
+        }
+      } else if (device === "tablet" || device === "phone") {
+        ctx.fillStyle = "#1a1a1a";
+        roundRect(ctx, fx, fy, frame.w, frame.h, frame.rounded);
+        ctx.fill();
+        ctx.fillStyle = "#000";
+        roundRect(ctx, fx + frame.bezel, fy + frame.bezel, frame.w - frame.bezel * 2, frame.h - frame.bezel * 2, 6);
+        ctx.fill();
+        // Status bar
+        ctx.fillStyle = "#25211D";
+        ctx.fillRect(fx + frame.bezel, fy + frame.bezel, frame.w - frame.bezel * 2, frame.barH);
+      }
+      ctx.shadowColor = "transparent";
+
+      // Screenshot
+      const sx = fx + frame.bezel;
+      const sy = fy + frame.bezel + frame.barH;
+      ctx.drawImage(img, sx + (contentW - drawW) / 2, sy + (contentH - drawH) / 2, drawW, drawH);
+
+      ctx.restore();
+
+      const mime = format === "webp" ? "image/webp" : "image/png";
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setError("Failed to render.");
+          return;
+        }
+        if (result) URL.revokeObjectURL(result.url);
+        setResult({ blob, url: URL.createObjectURL(blob) });
+      }, mime, 0.95);
+    } catch (e: any) {
+      setError(e?.message ?? "Render failed.");
+    }
+  };
+
+  const reset = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    if (result) URL.revokeObjectURL(result.url);
+    setFile(null);
+    setPreview("");
+    setResult(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="image/*"
+            onFiles={(f) => onFile(f[0])}
+            label="Drop a screenshot here"
+          />
+        ) : (
+          <div className="grid md:grid-cols-[1fr_320px] gap-5">
+            <div className="bg-[#11100F] border border-[#342821] rounded-xl p-4 overflow-auto">
+              <div
+                className="mx-auto"
+                style={{
+                  maxWidth: "100%",
+                  background: bg,
+                  borderRadius: `${radius}px`,
+                }}
+              >
+                <div
+                  style={{
+                    padding: `${padding}px`,
+                    background: bg,
+                    borderRadius: `${radius}px`,
+                  }}
+                >
+                  <DevicePreview device={device} src={preview} shadow={shadow} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Device</label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {(["desktop", "laptop", "tablet", "phone", "browser"] as Device[]).map((d) => {
+                    const Icon = d === "desktop" ? Monitor : d === "laptop" ? Laptop : d === "tablet" ? Tablet : d === "phone" ? Smartphone : Globe;
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => setDevice(d)}
+                        className={
+                          "p-2 rounded-lg border flex flex-col items-center gap-1 transition-colors " +
+                          (device === d
+                            ? "bg-[#C96B4B]/10 border-[#C96B4B]/50 text-[#E0805C]"
+                            : "bg-[#25211D] border-[#342821] text-[#91887D] hover:border-[#C96B4B]/40")
+                        }
+                        title={d}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="text-[10px] capitalize">{d}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Background</label>
+                <div className="flex gap-2">
+                  {["#11100F", "#191715", "#25211D", "#C96B4B", "#E8E1D5"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setBg(c)}
+                      className={
+                        "w-8 h-8 rounded-md border-2 transition-all " +
+                        (bg === c ? "border-[#C96B4B] scale-110" : "border-[#342821]")
+                      }
+                      style={{ backgroundColor: c }}
+                      aria-label={c}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={bg}
+                    onChange={(e) => setBg(e.target.value)}
+                    className="w-8 h-8 rounded-md border border-[#342821] bg-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Padding ({padding}px)
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={120}
+                  value={padding}
+                  onChange={(e) => setPadding(parseInt(e.target.value))}
+                  className="w-full accent-[#C96B4B]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Corner ({radius}px)
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={48}
+                    value={radius}
+                    onChange={(e) => setRadius(parseInt(e.target.value))}
+                    className="w-full accent-[#C96B4B]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Rotation ({rotation}Â°)
+                  </label>
+                  <input
+                    type="range"
+                    min={-30}
+                    max={30}
+                    value={rotation}
+                    onChange={(e) => setRotation(parseInt(e.target.value))}
+                    className="w-full accent-[#C96B4B]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={shadow}
+                    onChange={(e) => setShadow(e.target.checked)}
+                    className="accent-[#C96B4B]"
+                  />
+                  Drop shadow
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Format</label>
+                  <select
+                    value={format}
+                    onChange={(e) => setFormat(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm focus:border-[#C96B4B] outline-none"
+                  >
+                    <option value="png">PNG</option>
+                    <option value="webp">WebP</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Scale ({scale.toFixed(2)}Ã—)
+                  </label>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={1.5}
+                    step={0.05}
+                    value={scale}
+                    onChange={(e) => setScale(parseFloat(e.target.value))}
+                    className="w-full accent-[#C96B4B]"
+                  />
+                </div>
+              </div>
+
+              <Button onClick={render} className="w-full">
+                Generate
+              </Button>
+              <Button variant="outline" className="w-full" onClick={reset}>
+                Replace image
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <canvas ref={canvasRef} className="hidden" />
+
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        {result && (
+          <div className="flex flex-col gap-3 p-4 bg-[#25211D] border border-[#C96B4B]/20 rounded-lg">
+            <div className="flex-1">
+              <img src={result.url} alt="Mockup" className="max-w-full rounded-md" />
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-[#91887D]">
+                Mockup ready ({formatBytes(result.blob.size)})
+              </span>
+              <a href={result.url} download={`mockup.${format}`}>
+                <Button>Download</Button>
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function DevicePreview({
+  device,
+  src,
+  shadow,
+}: {
+  device: Device;
+  src: string;
+  shadow: boolean;
+}) {
+  const sizes: Record<Device, string> = {
+    desktop: "max-width: 720px",
+    laptop: "max-width: 640px",
+    tablet: "max-width: 360px",
+    phone: "max-width: 200px",
+    browser: "max-width: 640px",
+  };
+  return (
+    <div
+      className="relative mx-auto bg-[#1a1a1a] rounded-xl overflow-hidden"
+      style={{ maxWidth: sizes[device], boxShadow: shadow ? "0 30px 60px rgba(0,0,0,0.5)" : "none" }}
+    >
+      {/* Top bar */}
+      <div className="h-7 bg-[#25211D] border-b border-[#342821] flex items-center gap-1.5 px-3">
+        <div className="flex gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-[#91887D]" />
+          <div className="w-2 h-2 rounded-full bg-[#91887D]" />
+          <div className="w-2 h-2 rounded-full bg-[#91887D]" />
+        </div>
+        {device === "browser" && (
+          <div className="flex-1 mx-2 h-4 bg-[#11100F] rounded px-2 text-[10px] text-[#91887D] flex items-center">
+            https://yoursite.com
+          </div>
+        )}
+      </div>
+      <img src={src} alt="" className="w-full block" />
+    </div>
+  );
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+  topOnly?: boolean
+) {
+  ctx.beginPath();
+  if (topOnly) {
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h);
+    ctx.closePath();
+  } else {
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+}
+
+
+============================================================
+FILE: src\tools\split-pdf\index.tsx
+============================================================
+
+import { useState } from "react";
+import { PDFDocument } from "pdf-lib";
+import {
+  ToolLayout,
+  FileDropzone,
+  Button,
+  DownloadResult,
+  ProgressBar,
+  ErrorDisplay,
+  formatBytes,
+} from "../../components/ui";
+import { TOOLS_BY_SLUG } from "../registry";
+import { FileText, Loader2 } from "lucide-react";
+
+export default function SplitPDF() {
+  const [file, setFile] = useState<File | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [range, setRange] = useState("");
+  const [result, setResult] = useState<Blob | null>(null);
+  const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const tool = TOOLS_BY_SLUG["split-pdf"];
+
+  const load = async (f: File) => {
+    setError(null);
+    setResult(null);
+    try {
+      const buf = await f.arrayBuffer();
+      const pdf = await PDFDocument.load(buf, { ignoreEncryption: true });
+      setFile(f);
+      setPageCount(pdf.getPageCount());
+    } catch (e: any) {
+      setError("Could not read this PDF. It may be corrupted or encrypted.");
+    }
+  };
+
+  const parseRange = (s: string, total: number): number[] => {
+    const pages = new Set<number>();
+    const parts = s.split(",").map((x) => x.trim()).filter(Boolean);
+    for (const part of parts) {
+      if (part.includes("-")) {
+        const [a, b] = part.split("-").map((x) => parseInt(x.trim(), 10));
+        if (!Number.isFinite(a) || !Number.isFinite(b)) throw new Error(`Invalid range: ${part}`);
+        const lo = Math.max(1, Math.min(a, b));
+        const hi = Math.min(total, Math.max(a, b));
+        for (let i = lo; i <= hi; i++) pages.add(i);
+      } else {
+        const n = parseInt(part, 10);
+        if (!Number.isFinite(n) || n < 1 || n > total) throw new Error(`Invalid page: ${part}`);
+        pages.add(n);
+      }
+    }
+    return Array.from(pages).sort((a, b) => a - b);
+  };
+
+  const split = async () => {
+    if (!file) return;
+    setError(null);
+    setWorking(true);
+    setProgress(10);
+    try {
+      const selected = parseRange(range || `1-${pageCount}`, pageCount);
+      if (!selected.length) throw new Error("No pages selected.");
+      const src = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+      const out = await PDFDocument.create();
+      for (let i = 0; i < selected.length; i++) {
+        const [pg] = await out.copyPages(src, [selected[i] - 1]);
+        out.addPage(pg);
+        setProgress(10 + ((i + 1) / selected.length) * 85);
+      }
+      const bytes = await out.save();
+      setResult(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+      setProgress(100);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to split PDF.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const reset = () => {
+    setFile(null);
+    setPageCount(0);
+    setRange("");
+    setResult(null);
+    setError(null);
+  };
+
+  return (
+    <ToolLayout tool={tool}>
+      <div className="space-y-5">
+        {!file ? (
+          <FileDropzone
+            accept="application/pdf,.pdf"
+            onFiles={(f) => load(f[0])}
+            label="Drop a PDF here"
+          />
+        ) : (
+          <div className="flex items-center gap-3 p-4 bg-[#25211D] border border-[#342821] rounded-lg">
+            <div className="w-10 h-10 rounded-md bg-[#191715] flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[#C96B4B]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm truncate">{file.name}</p>
+              <p className="text-xs text-[#91887D]">
+                {formatBytes(file.size)} â€¢ {pageCount} page{pageCount !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={reset}>
+              Replace
+            </Button>
+          </div>
+        )}
+
+        {file && (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                Page range
+              </label>
+              <input
+                type="text"
+                value={range}
+                onChange={(e) => setRange(e.target.value)}
+                placeholder={`e.g. 1, 1-5, 2,4,7, 1-3,8-${pageCount}`}
+                className="w-full px-3 py-2 bg-[#11100F] border border-[#342821] rounded-lg text-sm placeholder:text-[#91887D] focus:border-[#C96B4B] outline-none"
+              />
+              <p className="text-xs text-[#91887D] mt-1.5">
+                Leave empty to extract all pages. Separate pages with commas.
+              </p>
+            </div>
+          </>
+        )}
+
+        {working && <ProgressBar progress={progress} label="Extracting pages" />}
+        {error && <ErrorDisplay message={error} onRetry={reset} />}
+        <DownloadResult blob={result} filename="extracted.pdf" label="Download PDF" />
+
+        {file && !working && (
+          <Button onClick={split} loading={working}>
+            {working ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Extract pages
+          </Button>
+        )}
+      </div>
+    </ToolLayout>
+  );
+}
+
+
+============================================================
+FILE: src\utils\cn.ts
+============================================================
+
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
+============================================================
+FILE: package.json
+============================================================
+
+{
+  "name": "react-vite-tailwind",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/papaparse": "^5.5.2",
+    "@types/qrcode": "^1.5.6",
+    "clsx": "2.1.1",
+    "file-saver": "^2.0.5",
+    "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^1.30.0",
+    "papaparse": "^5.5.4",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.6.205",
+    "qrcode": "^1.5.4",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-easy-crop": "^6.2.3",
+    "react-router-dom": "^7.18.2",
+    "tailwind-merge": "3.4.0",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.17",
+    "@types/node": "22.19.17",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.1.1",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3",
+    "vite": "7.3.2",
+    "vite-plugin-singlefile": "2.3.0"
+  }
+}
+
+
+============================================================
+FILE: vite.config.ts
+============================================================
+
+import path from "path";
+import { fileURLToPath } from "url";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { viteSingleFile } from "vite-plugin-singlefile";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), tailwindcss(), viteSingleFile()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+});
+
+
+============================================================
+FILE: tsconfig.json
+============================================================
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "types": ["node"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "vite.config.ts"]
+}
+
+
+============================================================
+FILE: index.html
+============================================================
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#11100F" />
+    <meta name="description" content="Xevio â€” Free PDF, image, text and developer tools. Private by design. Your files stay on your device." />
+    <meta property="og:title" content="Xevio â€” Free tools. Private by design." />
+    <meta property="og:description" content="PDF, image, text and utility tools that work directly in your browser." />
+    <meta property="og:type" content="website" />
+    <title>Xevio â€” Free tools. Private by design.</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+

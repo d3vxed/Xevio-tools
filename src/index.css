@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #11100F;
+  --color-surface: #191715;
+  --color-elevated: #25211D;
+  --color-text: #E8E1D5;
+  --color-muted: #91887D;
+  --color-accent: #C96B4B;
+  --color-accent-hover: #E0805C;
+  --color-border: #342821;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  background-color: #11100F;
+  color: #E8E1D5;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #11100F; }
+::-webkit-scrollbar-thumb { background: #342821; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #91887D; }
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid #C96B4B;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fade-in 0.4s ease-out; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #191715 0%, #25211D 50%, #191715 100%);
+  background-size: 800px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* React easy crop override */
+.reactEasyCrop_Container { background: #11100F !important; }
+.reactEasyCrop_CropArea { border-color: #C96B4B !important; }
+
+/* JSON / Code block font */
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
