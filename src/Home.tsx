@@ -77,10 +77,9 @@ export default function Home() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#C96B4B]/5 blur-3xl" />
         </div>
         <div className="flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#191715] border border-[#342821] text-xs text-[#91887D] mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-[#C96B4B]" />
-            <span>Free tools. Private by design.</span>
-          </div>
+ <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#191715] border border-[#342821] text-xs text-[#91887D] mb-6">
+  <span>Free tools. Private by design.</span>
+</div>
           <h1 className="text-5xl md:text-7xl font-semibold tracking-tighter bg-gradient-to-b from-[#E8E1D5] to-[#91887D] bg-clip-text text-transparent">
             XEVIO
           </h1>

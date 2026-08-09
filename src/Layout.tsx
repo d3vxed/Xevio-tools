@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { TOOLS, CATEGORIES, type ToolCategory } from "./tools/registry";
 import { cn } from "./utils/cn";
+import { createPortal } from "react-dom";
 import {
   Search,
   X,
@@ -96,78 +97,87 @@ function ToolSearch() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-[#191715] border border-[#342821] rounded-lg text-sm text-[#91887D] hover:border-[#C96B4B]/40 transition-colors"
-      >
-        <Search className="w-4 h-4" />
-        <span className="flex-1 text-left">Search tools…</span>
-        <span className="text-[10px] bg-[#25211D] px-1.5 py-0.5 rounded border border-[#342821]">
-          ⌘K
-        </span>
-      </button>
-    );
-  }
+  // Lock body scroll while the search overlay is open
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm"
-      onClick={() => setOpen(false)}
-    >
-      <div
-        className="w-full max-w-xl bg-[#191715] border border-[#342821] rounded-xl shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Search tools"
+        title="Search tools (⌘K)"
+        className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#342821] text-[#91887D] hover:text-[#E8E1D5] hover:border-[#C96B4B]/50 hover:bg-[#25211D] transition-colors"
       >
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#342821]">
-          <Search className="w-4 h-4 text-[#91887D]" />
-          <input
-            autoFocus
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search tools…"
-            className="flex-1 bg-transparent text-sm text-[#E8E1D5] placeholder:text-[#91887D] outline-none"
-          />
-          <button
+        <Search className="w-4 h-4" />
+      </button>
+
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
-            className="text-[#91887D] hover:text-[#E8E1D5]"
-            aria-label="Close search"
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="max-h-[50vh] overflow-y-auto p-2">
-          {results.length === 0 ? (
-            <div className="py-8 text-center text-sm text-[#91887D]">
-              No tools match “{q}”
+            <div
+              className="w-full max-w-xl bg-[#191715] border border-[#342821] rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-[#342821]">
+                <Search className="w-4 h-4 text-[#91887D]" />
+                <input
+                  autoFocus
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search tools…"
+                  className="flex-1 bg-transparent text-sm text-[#E8E1D5] placeholder:text-[#91887D] outline-none"
+                />
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-[#91887D] hover:text-[#E8E1D5]"
+                  aria-label="Close search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="max-h-[50vh] overflow-y-auto p-2">
+                {results.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-[#91887D]">
+                    No tools match “{q}”
+                  </div>
+                ) : (
+                  results.map((t) => (
+                    <button
+                      key={t.slug}
+                      onClick={() => {
+                        navigate(t.path);
+                        setOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#25211D] text-left"
+                    >
+                      <div className="w-9 h-9 rounded-md bg-[#25211D] flex items-center justify-center text-[#C96B4B]">
+                        {t.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[#E8E1D5]">{t.name}</p>
+                        <p className="text-xs text-[#91887D] truncate">{t.description}</p>
+                      </div>
+                      <span className="text-[10px] text-[#91887D] uppercase tracking-wider">
+                        {t.category}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
-          ) : (
-            results.map((t) => (
-              <button
-                key={t.slug}
-                onClick={() => {
-                  navigate(t.path);
-                  setOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#25211D] text-left"
-              >
-                <div className="w-9 h-9 rounded-md bg-[#25211D] flex items-center justify-center text-[#C96B4B]">
-                  {t.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#E8E1D5]">{t.name}</p>
-                  <p className="text-xs text-[#91887D] truncate">{t.description}</p>
-                </div>
-                <span className="text-[10px] text-[#91887D] uppercase tracking-wider">
-                  {t.category}
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -200,9 +210,11 @@ function SidebarContent({
     <div className="flex flex-col h-full">
       <div className="px-5 pt-6 pb-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group" onClick={onClose}>
-          <div className="w-8 h-8 rounded-lg bg-[#C96B4B] flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
+         <div className="w-8 h-8 rounded-lg bg-[#C96B4B] flex items-center justify-center">
+  <span className="text-[13px] font-extrabold tracking-tighter bg-gradient-to-b from-[#E8E1D5] to-[#91887D] bg-clip-text text-transparent">
+    XV
+  </span>
+</div>
           <span className="text-lg font-semibold tracking-tight text-[#E8E1D5]">
             Xevio
           </span>
@@ -410,10 +422,12 @@ export function Layout() {
             <Menu className="w-5 h-5" />
           </button>
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-[#C96B4B] flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="font-semibold tracking-tight">Xevio</span>
+         <div className="w-7 h-7 rounded-md bg-[#C96B4B] flex items-center justify-center">
+  <span className="text-[11px] font-extrabold tracking-tighter bg-gradient-to-b from-[#E8E1D5] to-[#91887D] bg-clip-text text-transparent">
+    XV
+  </span>
+</div>
+            <span className="font-semibold tracking-tight">Xeviso</span>
           </Link>
         </header>
 
