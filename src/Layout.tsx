@@ -435,24 +435,22 @@ export function Layout() {
           <Outlet />
         </main>
 
-        <footer className="border-t border-[#342821] px-4 md:px-8 py-6 text-xs text-[#91887D]">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5" />
-              <span>
-                © 2026 Xevio. Free to use.
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link to="/privacy" className="hover:text-[#E8E1D5]">
-                Privacy
-              </Link>
-              <Link to="/" className="hover:text-[#E8E1D5]">
-                Home
-              </Link>
-            </div>
-          </div>
-        </footer>
+    <footer className="border-t border-border px-4 md:px-8 py-6 text-xs text-muted">
+  <div className="max-w-5xl mx-auto flex flex-col items-center justify-center gap-2 text-center">
+    <div className="flex items-center gap-2">
+      <Lock className="w-3.5 h-3.5" />
+      <span>© 2026 Xevio. Free to use.</span>
+    </div>
+    <div className="flex items-center gap-4">
+      <Link to="/privacy" className="hover:text-text">
+        Privacy
+      </Link>
+      <Link to="/" className="hover:text-text">
+        Home
+      </Link>
+    </div>
+  </div>
+</footer>
       </div>
     </div>
   );
