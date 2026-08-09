@@ -59,7 +59,6 @@ export default function RemoveBackground() {
         model: QUALITY_MODEL[quality],
         output: { format: "image/png", quality: 1 },
         progress: (key, current, total) => {
-          // key looks like "fetch:model" while downloading, "compute:inference" while running
           const pct = total > 0 ? Math.round((current / total) * 100) : 0;
           setProgressLabel(key.startsWith("fetch") ? "Downloading model" : "Processing image");
           setProgress(pct);
