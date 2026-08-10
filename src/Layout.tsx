@@ -427,7 +427,7 @@ export function Layout() {
     XV
   </span>
 </div>
-            <span className="font-semibold tracking-tight">Xeviso</span>
+            <span className="font-semibold tracking-tight">Xevio</span>
           </Link>
         </header>
 
